@@ -11,7 +11,10 @@ const fakeMk = (authorize: () => Promise<void>, isAuthorized = false): MusicKitI
   play: async () => {},
   pause() {},
   addEventListener() {},
-  removeEventListener() {}
+  removeEventListener() {},
+  api: { music: async () => ({ status: 200, data: {} }) },
+  queue: { items: [], position: 0 },
+  changeToMediaAtIndex: async () => {}
 })
 
 describe('isAuthorizationError', () => {

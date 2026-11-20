@@ -25,6 +25,23 @@ export async function playSong(mk: MusicKitInstance, songId: string): Promise<vo
   await mk.setQueue({ song: songId, startPlaying: true })
 }
 
+/**
+ * Replaces the queue with a playlist and starts at track `index` (its position in our list).
+ * If MusicKit's queue doesn't line up with our list (unavailable tracks dropped, playlist
+ * edited since we loaded it), jumps to `trackId` in the queue instead.
+ */
+export async function playPlaylist(
+  mk: MusicKitInstance,
+  playlistId: string,
+  index = 0,
+  trackId?: string
+): Promise<void> {
+  await mk.setQueue({ playlist: playlistId, startWith: index, startPlaying: true })
+  if (trackId === undefined || mk.queue.items[mk.queue.position]?.id === trackId) return
+  const found = mk.queue.items.findIndex((item) => item.id === trackId)
+  if (found >= 0) await mk.changeToMediaAtIndex(found)
+}
+
 export async function togglePlay(mk: MusicKitInstance): Promise<void> {
   if (mk.playbackState === PLAYING) mk.pause()
   else await mk.play()

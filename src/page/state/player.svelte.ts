@@ -1,8 +1,5 @@
 import { whenMusicKitReady, type MusicKitInstance } from '../music/musickit'
-import { onPlayback, playbackInfo, playSong, togglePlay } from '../music/player'
-
-/** playback spike (step 2): Blinding Lights, The Weeknd (catalog id, has synced lyrics) */
-const TEST_SONG_ID = '1488408568'
+import { onPlayback, playbackInfo, playPlaylist, togglePlay } from '../music/player'
 
 /** Now-playing state from MusicKit events. `start()` once signed in, it returns the cleanup. */
 class Player {
@@ -11,6 +8,7 @@ class Player {
   duration = $state(0)
   error = $state<string | undefined>()
   #mk: MusicKitInstance | undefined
+  #request = 0
 
   start(): () => void {
     const ctl = new AbortController()
@@ -38,8 +36,9 @@ class Player {
     }
   }
 
-  async playTestSong(): Promise<void> {
-    await this.#run(playSong, TEST_SONG_ID)
+  /** plays a playlist from track `index` (`trackId` guards against the queue not matching our list) */
+  async playPlaylist(playlistId: string, index = 0, trackId?: string): Promise<void> {
+    await this.#run(playPlaylist, playlistId, index, trackId)
   }
 
   async toggle(): Promise<void> {
@@ -52,12 +51,14 @@ class Player {
   ): Promise<void> {
     const mk = this.#mk
     if (!mk) return
+    const req = ++this.#request
     this.error = undefined
     try {
       await fn(mk, ...args)
     } catch (err) {
       console.error('[pod] playback failed:', err)
-      this.error = "Couldn't play. Try again."
+      // a failure of an older tap doesn't matter once a newer one was made
+      if (req === this.#request) this.error = "Couldn't play. Try again."
     }
   }
 }

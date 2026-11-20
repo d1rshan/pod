@@ -30,7 +30,7 @@ each step = one session. "done when" = what the user checks before merging.
   - quick check: can we fetch synced lyrics through the page's MusicKit?
   - done when: song plays audibly past 30s; lyrics feasibility noted below
 
-- [ ] **3. library + playlist detail**
+- [x] **3. library + playlist detail**
   - tab bar (Playing / Library / Discover), per-tab nav stacks
   - `music/library.ts`: user's playlists, playlist tracks -> our types (+ tests)
   - `ListRow`, `Artwork`, `BackLink` components
@@ -78,3 +78,6 @@ Gotchas: window.open children ignore `session.setUserAgent` (Apple's popup rende
 
 **2:** `music/player.ts` (setQueue/play/pause/playback events) -> `state/player.svelte.ts` (spike: hard-coded Blinding Lights `1488408568`) -> placeholder buttons in `App.svelte`. Full track plays (40s+ of 3:22, `previewOnly: false`).
 Gotcha: `setQueue` can outlast the click's user activation -> stuck in `loading`; main sets `autoplayPolicy: 'no-user-gesture-required'`. Lyrics: feasible - `mk.api.music('/v1/catalog/{sf}/songs/{id}/lyrics')` returns line-timed TTML (`<p begin end>`), `syncedLyrics` is 400; songs have `hasTimeSyncedLyrics`. Next: step 3.
+
+**3:** `music/library.ts` (paged `/v1/me/library/playlists` + `/tracks`, follows `next`) -> `state/library.svelte.ts`; `state/navStack.ts` (pure tabs + stacks, re-tap tab = root) behind `state/nav.svelte.ts`; `TabBar`, `ListRow`, `Artwork`, `BackLink`, `Status`. Tap a track -> `setQueue({ playlist, startWith: i })`; if the queue item there isn't the tapped id, `changeToMediaAtIndex` to it. Scroll kept per stack entry. Playing/Discover tabs are placeholders.
+Gotchas: `mk.api.music` resolves (doesn't throw) on non-2xx -> check `res.status`; 404 = empty. Generated playlist covers are fixed URLs (no `{w}x{h}`). Next: step 4.

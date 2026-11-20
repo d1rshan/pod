@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test'
-import type { MusicKitInstance } from './musickit'
-import { onPlayback, playbackInfo, playSong, togglePlay } from './player'
+import type { MusicKitInstance, QueueOptions } from './musickit'
+import { onPlayback, playbackInfo, playPlaylist, playSong, togglePlay } from './player'
 
-function fakeMk(playbackState = 0) {
+function fakeMk(playbackState = 0, queueIds: string[] = []) {
   const listeners = new Map<string, Set<() => void>>()
   const calls: string[] = []
   const mk = {
@@ -11,8 +11,14 @@ function fakeMk(playbackState = 0) {
     currentPlaybackTime: 42,
     currentPlaybackDuration: 200,
     authorize: async () => {},
-    setQueue: async (o: { song: string; startPlaying?: boolean }) => {
-      calls.push(`setQueue ${o.song} ${o.startPlaying}`)
+    setQueue: async (o: QueueOptions) => {
+      calls.push(`setQueue ${JSON.stringify(o)}`)
+      mk.queue.position = o.startWith ?? 0
+    },
+    queue: { items: queueIds.map((id) => ({ id })), position: 0 },
+    changeToMediaAtIndex: async (i: number) => {
+      calls.push(`changeTo ${i}`)
+      mk.queue.position = i
     },
     play: async () => void calls.push('play'),
     pause: () => void calls.push('pause'),
@@ -20,7 +26,8 @@ function fakeMk(playbackState = 0) {
       if (!listeners.has(n)) listeners.set(n, new Set())
       listeners.get(n)!.add(cb)
     },
-    removeEventListener: (n: string, cb: () => void) => void listeners.get(n)?.delete(cb)
+    removeEventListener: (n: string, cb: () => void) => void listeners.get(n)?.delete(cb),
+    api: { music: async () => ({ status: 200, data: {} }) }
   } satisfies MusicKitInstance
   const emit = (n: string): void => listeners.get(n)?.forEach((cb) => cb())
   return { mk, calls, emit, listeners }
@@ -37,7 +44,38 @@ describe('playSong', () => {
   test('queues the song and starts it', async () => {
     const { mk, calls } = fakeMk()
     await playSong(mk, '123')
-    expect(calls).toEqual(['setQueue 123 true'])
+    expect(calls).toEqual(['setQueue {"song":"123","startPlaying":true}'])
+  })
+})
+
+describe('playPlaylist', () => {
+  test('queues the playlist starting at the given track', async () => {
+    const { mk, calls } = fakeMk()
+    await playPlaylist(mk, 'p.abc', 3)
+    await playPlaylist(mk, 'p.abc')
+    expect(calls).toEqual([
+      'setQueue {"playlist":"p.abc","startWith":3,"startPlaying":true}',
+      'setQueue {"playlist":"p.abc","startWith":0,"startPlaying":true}'
+    ])
+  })
+
+  test('stays put when the queue lines up with our list', async () => {
+    const { mk, calls } = fakeMk(0, ['a', 'b', 'c'])
+    await playPlaylist(mk, 'p.abc', 1, 'b')
+    expect(calls).toEqual(['setQueue {"playlist":"p.abc","startWith":1,"startPlaying":true}'])
+  })
+
+  test("jumps to the tapped track when MusicKit's queue differs (e.g. a dropped track)", async () => {
+    const { mk, calls } = fakeMk(0, ['a', 'c', 'd'])
+    await playPlaylist(mk, 'p.abc', 2, 'c')
+    expect(calls.at(-1)).toBe('changeTo 1')
+    expect(mk.queue.position).toBe(1)
+  })
+
+  test('falls back to the index when the track is not in the queue', async () => {
+    const { mk, calls } = fakeMk(0, ['a', 'b'])
+    await playPlaylist(mk, 'p.abc', 1, 'zzz')
+    expect(calls).toHaveLength(1)
   })
 })
 

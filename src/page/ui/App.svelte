@@ -1,8 +1,15 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
-  import { formatTime } from '../../shared/format'
+  import { onMount, tick } from 'svelte'
+  import type { Screen } from '../state/navStack'
   import { auth } from '../state/auth.svelte'
+  import { library } from '../state/library.svelte'
+  import { nav } from '../state/nav.svelte'
   import { player } from '../state/player.svelte'
+  import TabBar from './components/TabBar.svelte'
+  import Discover from './screens/Discover.svelte'
+  import Library from './screens/Library.svelte'
+  import Playing from './screens/Playing.svelte'
+  import Playlist from './screens/Playlist.svelte'
   import SignIn from './screens/SignIn.svelte'
 
   onMount(() => auth.start())
@@ -10,58 +17,67 @@
   $effect(() => {
     if (auth.status === 'signed-in') return player.start()
   })
+
+  // signing out (or in as someone else) starts fresh
+  $effect(() => {
+    if (auth.status === 'signed-out') {
+      library.reset()
+      nav.reset()
+      player.error = undefined
+    }
+  })
+
+  const screen = $derived(nav.screen)
+  let scroller = $state<HTMLElement>()
+  /** scroll position per stack entry: back/tab switch restores it, a new screen starts at the top */
+  const scrollTops = new WeakMap<Screen, number>()
+
+  $effect(() => {
+    const shown = screen
+    player.error = undefined // a playback error belongs to the screen it happened on
+    void tick().then(() => {
+      if (scroller && shown === nav.screen) scroller.scrollTop = scrollTops.get(shown) ?? 0
+    })
+  })
 </script>
 
 {#if auth.status === 'signed-in'}
-  <!-- placeholder until the tabs land (step 3); playback spike (step 2) -->
-  <main>
-    <h1>pod</h1>
-    <p>{formatTime(player.time)} / {formatTime(player.duration)}</p>
-    <div class="buttons">
-      <button onclick={() => player.playTestSong()}>Play test song</button>
-      <button onclick={() => player.toggle()}>{player.playing ? 'Pause' : 'Play'}</button>
-    </div>
-    {#if player.error}<p class="error">{player.error}</p>{/if}
-  </main>
+  <div class="shell">
+    <header><TabBar /></header>
+    <main bind:this={scroller} onscroll={() => scroller && scrollTops.set(screen, scroller.scrollTop)}>
+      {#if screen.name === 'playing'}
+        <Playing />
+      {:else if screen.name === 'library'}
+        <Library />
+      {:else if screen.name === 'playlist'}
+        {#key screen.playlist.id}
+          <Playlist playlist={screen.playlist} />
+        {/key}
+      {:else}
+        <Discover />
+      {/if}
+    </main>
+  </div>
 {:else}
   <SignIn />
 {/if}
 
 <style>
-  main {
+  .shell {
     height: 100%;
-    display: grid;
-    place-content: center;
-    justify-items: center;
-    gap: var(--space-2);
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    flex: none;
+    padding: var(--space-3) var(--space-4) 0;
     -webkit-app-region: drag;
   }
-  h1 {
-    font-size: var(--text-title);
-    font-weight: var(--weight-bold);
-    letter-spacing: var(--tracking-title);
-  }
-  p {
-    color: var(--text-secondary);
-    font-variant-numeric: tabular-nums;
-  }
-  .error {
-    color: var(--accent);
-  }
-  .buttons {
-    display: flex;
-    gap: var(--space-2);
-  }
-  button {
-    -webkit-app-region: no-drag;
-    padding: var(--space-2) var(--space-3);
-    border: 0;
-    border-radius: var(--radius-field);
-    background: var(--play-bg);
-    color: var(--play-fg);
-    font: inherit;
-    font-size: var(--text-button);
-    font-weight: var(--weight-semibold);
-    cursor: pointer;
+  main {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--space-1) var(--space-4) var(--space-3);
+    scrollbar-width: none;
   }
 </style>
