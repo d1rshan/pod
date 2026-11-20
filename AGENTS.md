@@ -32,8 +32,9 @@ playwright-cli eval "() => window.MusicKit?.getInstance().playbackState"
 - build frontend + backend together, no intermediate commits
 - verify -> run `/code-review` yourself in the same thread -> fix its findings -> re-verify -> user's manual check
 - tick the step + 2-3 line handoff note in `docs/progress.md`
-- only then commit: one commit per step (code + docs together)
-- update `docs/spec.md` only when a product/architecture decision changes
+- only commit once user gives the permission: one commit per step (code + docs together)
+
+update `docs/spec.md` only when a product/architecture decision changes
 
 ## verifying
 

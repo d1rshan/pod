@@ -1,4 +1,3 @@
-import { contextBridge } from 'electron'
-
-// TODO: expose a minimal, typed API to the injected UI.
-contextBridge.exposeInMainWorld('pod', {})
+// Runs in music.apple.com before the page bundle. Nothing exposed yet:
+// add a minimal, typed contextBridge API here when the UI needs one (window controls, step 7).
+export {}

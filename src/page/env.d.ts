@@ -3,7 +3,8 @@
 
 declare global {
   interface Window {
-    pod: Record<string, never>
+    /** the currently injected pod UI (lets a dev re-inject replace it) */
+    __pod?: { destroy(): void }
   }
 }
 
