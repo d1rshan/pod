@@ -3,6 +3,13 @@ import { join } from 'node:path'
 
 const PARTITION = 'persist:pod'
 
+// Dev only: expose Chrome DevTools Protocol on localhost so agents can attach
+// with `playwright-cli attach --cdp=http://127.0.0.1:9222` to inspect the running app.
+if (!app.isPackaged) {
+  app.commandLine.appendSwitch('remote-debugging-port', process.env['POD_DEBUG_PORT'] ?? '9222')
+  app.commandLine.appendSwitch('remote-debugging-address', '127.0.0.1')
+}
+
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
     width: 320,

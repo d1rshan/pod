@@ -7,10 +7,11 @@ bun install
 bun run dev
 ```
 
+See `docs/spec.md` for what it is and `AGENTS.md` for how to work on it.
+
 **NixOS:** needs `programs.nix-ld.enable = true`. Run inside the dev shell, which provides Electron's libraries:
 
 ```sh
 nix develop --command bun dev
 ```
 
-**Electron download:** if `bun install` doesn't fetch the castLabs binary (`node_modules/electron/path.txt` should say `electron`), run `node node_modules/electron/install.js`.

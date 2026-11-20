@@ -7,6 +7,6 @@ release/
 .env*
 .DS_Store
 
-# private
-plan.md
 *.tsbuildinfo
+.inspect/
+.playwright-cli/
