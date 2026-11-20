@@ -26,6 +26,7 @@
   --text-title: 22px;
   --text-name: 18px;
   --text-body: 11px;
+  --text-button: 12px;
   --text-small: 9px;
   --weight-bold: 650;
   --weight-semibold: 600;
@@ -33,6 +34,7 @@
   --tracking-name: -0.55px;
 
   --radius-window: 25px;
+  --radius-icon: 18px;
   --radius-art: 15px;
   --radius-tabs: 11px;
   --radius-field: 9px;
@@ -44,6 +46,10 @@
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
+  --space-5: 24px;
+
+  --size-icon: 72px;
+  --size-button: 40px;
 }
 
 @media (prefers-color-scheme: dark) {

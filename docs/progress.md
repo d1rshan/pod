@@ -17,7 +17,7 @@ each step = one session. "done when" = what the user checks before merging.
   - `ui/styles/tokens.css` with light + dark vars from the canvas
   - done when: window shows our placeholder UI over the hidden Apple page; no console errors
 
-- [ ] **1. sign in + MusicKit ready**
+- [x] **1. sign in + MusicKit ready**
   - wait for Widevine (castLabs `components.whenReady()`), then for `MusicKit.getInstance()`
   - sign in screen (canvas frame "Sign in") -> `authorize()`
   - allow Apple login popup (Apple auth domains only), deny other popups
@@ -72,3 +72,6 @@ Gotcha: agents can't launch Electron from their shell (zygote/GPU crash) - user 
 
 **0:** main loads music.apple.com, injects `out/page/index.js` via `executeJavaScript` on dom-ready (window shown after), Apple's `body > *` hidden, Svelte in a shadow root. Page bundle is an IIFE built by a plugin in main's vite config (watched in dev, re-injected in place without reload). UA stripped of Electron/pod.
 Gotcha: Apple's CSP allows inline styles + no Trusted Types, so Svelte `css: 'injected'` works in the shadow root. MusicKit is on `window` (main world). Next: step 1.
+
+**1:** main waits for Widevine (capped 10s), allows only Apple auth popups (`isAppleAuthUrl`: authorize.music / activate / idmsa / appleid / `pNN-buy.itunes`), popup locked to those hosts. Page: `music/musickit.ts` (wait for instance, `authorize()`, auth events) -> `state/auth.svelte.ts` -> `screens/SignIn.svelte`.
+Gotchas: window.open children ignore `session.setUserAgent` (Apple's popup rendered blank) - UA is stripped via `app.userAgentFallback`. Closing the popup rejects `authorize()` with `AUTHORIZATION_ERROR` (treated as cancel). Blocked popup navigations are logged as `[pod] blocked sign-in popup navigation`. Some accounts (India, `myacinfo-alt`) get `media-user-token` only on .authorize.music.apple.com -> auth/v2/web 403 -> MusicKit signs out; on popup close main copies those cookies to .apple.com and reloads (`signInCookies.ts`). Next: step 2.

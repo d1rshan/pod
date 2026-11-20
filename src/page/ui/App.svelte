@@ -1,9 +1,20 @@
-<!-- placeholder until the real screens land (step 1+) -->
-<main>
-  <span class="dot"></span>
-  <h1>pod</h1>
-  <p>skeleton</p>
-</main>
+<script lang="ts">
+  import { onMount } from 'svelte'
+  import { auth } from '../state/auth.svelte'
+  import SignIn from './screens/SignIn.svelte'
+
+  onMount(() => auth.start())
+</script>
+
+{#if auth.status === 'signed-in'}
+  <!-- placeholder until the tabs land (step 3) -->
+  <main>
+    <h1>pod</h1>
+    <p>signed in</p>
+  </main>
+{:else}
+  <SignIn />
+{/if}
 
 <style>
   main {
@@ -13,12 +24,6 @@
     justify-items: center;
     gap: var(--space-2);
     -webkit-app-region: drag;
-  }
-  .dot {
-    width: var(--space-3);
-    height: var(--space-3);
-    border-radius: var(--radius-small);
-    background: var(--accent);
   }
   h1 {
     font-size: var(--text-title);
