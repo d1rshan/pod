@@ -11,8 +11,7 @@
   import Playing from './screens/Playing.svelte'
   import Playlist from './screens/Playlist.svelte'
   import SignIn from './screens/SignIn.svelte'
-  import { ambientPalette, ambientStyle } from './ambient'
-  import Ambient from './components/Ambient.svelte'
+  import ArtworkScene from './components/ArtworkScene.svelte'
 
   onMount(() => auth.start())
 
@@ -30,9 +29,10 @@
   })
 
   const screen = $derived(nav.screen)
-  /** the playing screen sits on the artwork's colours (behind the tabs too) */
+  /** the playing screen sits on its artwork (behind the tabs too) */
   const playing = $derived(screen.name === 'playing')
-  const palette = $derived(playing ? ambientPalette(player.colors) : undefined)
+  /** the cover's background colour: wash under the artwork scene, cover glow */
+  const tint = $derived(playing ? player.colors?.bg : undefined)
   let scroller = $state<HTMLElement>()
   /** scroll position per stack entry: back/tab switch restores it, a new screen starts at the top */
   const scrollTops = new WeakMap<Screen, number>()
@@ -48,8 +48,8 @@
 
 <!-- device frame: graphite bezel (drag handle) around the screen -->
 <div class="device">
-  <div class="screen" class:playing class:ambient={palette !== undefined} style={palette ? ambientStyle(palette) : ''}>
-    {#if palette}<Ambient {palette} />{/if}
+  <div class="screen" class:playing class:ambient={tint !== undefined} style:--ambient-0={tint}>
+    {#if playing && player.current?.artwork}<ArtworkScene artwork={player.current.artwork} />{/if}
     {#if auth.status === 'signed-in'}
       <div class="shell">
         <header><TabBar /></header>

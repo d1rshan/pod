@@ -39,7 +39,7 @@ src/
 ## screens (design: doop canvas GPK_jqny4n)
 
 - sign in: first run, opens Apple's login popup
-- playing: artwork over a slowly moving background in its colours, title, progress, prev/play/next, lyrics button
+- playing: artwork over its own cover, rotating and blurred into colour (docs/ambient.md), title, progress, prev/play/next, lyrics button
 - lyrics: synced lyrics (risky - internal endpoint, test early)
 - library: user's playlists only
 - playlist detail: tracks, active song highlighted

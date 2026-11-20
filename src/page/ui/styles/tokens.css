@@ -22,9 +22,8 @@
   --play-fg: #1c1c1e;
   --shadow-selected: none;
 
-  /* playing screen background: how much artwork colour goes into the bg and blobs */
+  /* playing screen: how much of the cover's colour goes into the bg under the artwork scene */
   --ambient-base-mix: 30%;
-  --ambient-blob-mix: 42%;
 
   --font: Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --text-title: 22px;
