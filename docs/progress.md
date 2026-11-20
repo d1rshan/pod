@@ -54,7 +54,7 @@ each step = one session. "done when" = what the user checks before merging.
   - done when: lyrics scroll in sync with playback
 
 - [ ] **7. polish**
-  - dark mode pass, window drag + close
+  - window drag + close
   - media keys / MPRIS work
   - measure RAM (~200MB target); try removing parts of Apple's DOM
   - done when: feels finished in daily use
@@ -82,5 +82,5 @@ Gotcha: `setQueue` can outlast the click's user activation -> stuck in `loading`
 **3:** `music/library.ts` (paged `/v1/me/library/playlists` + `/tracks`, follows `next`) -> `state/library.svelte.ts`; `state/navStack.ts` (pure tabs + stacks, re-tap tab = root) behind `state/nav.svelte.ts`; `TabBar`, `ListRow`, `Artwork`, `BackLink`, `Status`. Tap a track -> `setQueue({ playlist, startWith: i })`; if the queue item there isn't the tapped id, `changeToMediaAtIndex` to it. Scroll kept per stack entry. Playing/Discover tabs are placeholders.
 Gotchas: `mk.api.music` resolves (doesn't throw) on non-2xx -> check `res.status`; 404 = empty. Generated playlist covers are fixed URLs (no `{w}x{h}`). Inter is inlined as a data: URL `@font-face` in the document head (CSP blocks Google Fonts; shadow roots ignore `@font-face`). Next: step 4.
 
-**4:** `music/player.ts` gains now-playing (`queue.currentItem`, set before playback too), skip/seek (previous restarts past 3s), `currentIndex` -> `state/player.svelte.ts` (`current`, `position`, `playlistId`, `color`). Playing screen + `ProgressBar` (range input) + `Transport`; `ui/tint.ts` turns the artwork colour into token overrides on the whole shell (tabs included), black text on light covers. Playlist highlight only while the queue is that playlist, nearest copy to the queue position; tapping it toggles.
-Gotchas: library songs have no artwork `bgColor` -> looked up via `/v1/catalog/{sf}/songs/{playParams.catalogId}` (cached; failures retried, 404 = none). A seek to an unbuffered spot takes seconds, and MusicKit keeps playing the old position meanwhile, so `seek` pauses, seeks, then resumes; the store holds the bar and button on the target until it lands. Next: step 5.
+**4:** `music/player.ts` gains now-playing (`queue.currentItem`, set before playback too), skip/seek (previous restarts past 3s), `currentIndex` -> `state/player.svelte.ts` (`current`, `position`, `playlistId`, `colors`). Playing screen + `ProgressBar` (range input) + `Transport`; `ui/ambient.ts` + `Ambient` paint the artwork palette (bg + text colours) as a wash plus drifting blobs on the screen, translucent tabs on top; cover shrinks when paused. App went dark only (one token set). Playlist highlight only while the queue is that playlist, nearest copy to the queue position; tapping it toggles.
+Gotchas: the wash is the `.screen` background itself (a tinted child left a light seam at the rounded corners). Library songs have no artwork `bgColor` -> looked up via `/v1/catalog/{sf}/songs/{playParams.catalogId}` (cached; failures retried, 404 = none). A seek to an unbuffered spot takes seconds, and MusicKit keeps playing the old position meanwhile, so `seek` pauses, seeks, then resumes; the store holds the bar and button on the target until it lands. Next: step 5.

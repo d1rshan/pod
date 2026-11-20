@@ -11,7 +11,8 @@
   import Playing from './screens/Playing.svelte'
   import Playlist from './screens/Playlist.svelte'
   import SignIn from './screens/SignIn.svelte'
-  import { tintStyle } from './tint'
+  import { ambientPalette, ambientStyle } from './ambient'
+  import Ambient from './components/Ambient.svelte'
 
   onMount(() => auth.start())
 
@@ -29,8 +30,9 @@
   })
 
   const screen = $derived(nav.screen)
-  /** the playing screen takes the artwork's colour (tabs included) */
-  const tint = $derived(screen.name === 'playing' ? tintStyle(player.color) : '')
+  /** the playing screen sits on the artwork's colours (behind the tabs too) */
+  const playing = $derived(screen.name === 'playing')
+  const palette = $derived(playing ? ambientPalette(player.colors) : undefined)
   let scroller = $state<HTMLElement>()
   /** scroll position per stack entry: back/tab switch restores it, a new screen starts at the top */
   const scrollTops = new WeakMap<Screen, number>()
@@ -46,9 +48,10 @@
 
 <!-- device frame: graphite bezel (drag handle) around the screen -->
 <div class="device">
-  <div class="screen">
+  <div class="screen" class:playing class:ambient={palette !== undefined} style={palette ? ambientStyle(palette) : ''}>
+    {#if palette}<Ambient {palette} />{/if}
     {#if auth.status === 'signed-in'}
-      <div class="shell" class:tinted={tint !== ''} style={tint}>
+      <div class="shell">
         <header><TabBar /></header>
         <main bind:this={scroller} onscroll={() => scroller && scrollTops.set(screen, scroller.scrollTop)}>
           {#if screen.name === 'playing'}
@@ -86,21 +89,30 @@
     height: 100%;
     overflow: hidden;
     border-radius: calc(var(--radius-device) - var(--size-bezel));
-    background: var(--bg);
+    /* the screen paints the base colour itself: a tinted child would leave a seam of this
+       background along the rounded corners */
+    background-color: var(--bg);
     box-shadow: 0 0 0 1px var(--frame-screen-edge);
     -webkit-app-region: no-drag;
   }
+  /* playing: translucent surfaces so the artwork colour shows through */
+  .screen.playing {
+    --text-secondary: color-mix(in srgb, var(--text) 58%, transparent);
+    --bg-grouped: color-mix(in srgb, var(--text) 7%, transparent);
+    --bg-selected: color-mix(in srgb, var(--text) 24%, transparent);
+    --shadow-selected: none;
+    --track: color-mix(in srgb, var(--text) 16%, transparent);
+    --progress: var(--text);
+  }
+  /* the artwork's background as a wash, darkened enough for white text */
+  .screen.ambient {
+    background-color: color-mix(in oklab, oklch(from var(--ambient-0) min(l, 0.4) c h) var(--ambient-base-mix), var(--bg));
+  }
   .shell {
+    position: relative;
     height: 100%;
     display: flex;
     flex-direction: column;
-    color: var(--text);
-    background-color: var(--bg);
-  }
-  .shell.tinted {
-    background-color: var(--tint);
-    /* light from the top, falling off to near-black at the bottom */
-    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 45%, rgba(0, 0, 0, 0.45) 100%);
   }
   header {
     flex: none;

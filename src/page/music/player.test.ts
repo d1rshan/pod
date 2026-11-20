@@ -2,7 +2,8 @@ import { describe, expect, test } from 'bun:test'
 import type { MediaItem, MusicKitInstance, QueueOptions } from './musickit'
 import {
   currentIndex,
-  fetchArtworkColor,
+  fetchArtworkColors,
+  toArtworkColors,
   nowPlaying,
   onNowPlaying,
   onPlayback,
@@ -138,6 +139,20 @@ describe('toColor', () => {
   })
 })
 
+describe('toArtworkColors', () => {
+  test('background + valid text colours, in order', () => {
+    expect(toArtworkColors({ bgColor: '2B3334', textColor1: 'dfb8ac', textColor2: 'nope', textColor3: 'bb9d94' })).toEqual({
+      bg: '#2b3334',
+      text: ['#dfb8ac', '#bb9d94']
+    })
+  })
+
+  test('no background -> no palette', () => {
+    expect(toArtworkColors({ textColor1: 'dfb8ac' })).toBeUndefined()
+    expect(toArtworkColors(undefined)).toBeUndefined()
+  })
+})
+
 describe('toNowPlaying', () => {
   test('maps a library queue item', () => {
     const item: MediaItem = {
@@ -156,13 +171,13 @@ describe('toNowPlaying', () => {
       artist: 'Travis Scott',
       artwork: 'https://x/{w}x{h}bb.jpg',
       durationMs: 339061,
-      color: undefined,
+      colors: undefined,
       catalogId: '1456177229'
     })
   })
 
   test('takes the artwork colour when present, falls back on missing attributes', () => {
-    expect(toNowPlaying({ id: '1', attributes: { artwork: { bgColor: 'aabbcc' } } }).color).toBe('#aabbcc')
+    expect(toNowPlaying({ id: '1', attributes: { artwork: { bgColor: 'aabbcc' } } }).colors).toEqual({ bg: '#aabbcc', text: [] })
     expect(toNowPlaying({ id: '1' })).toMatchObject({ id: '1', title: 'Unknown', artist: '', durationMs: 0 })
   })
 })
@@ -184,24 +199,24 @@ describe('nowPlaying / onNowPlaying', () => {
   })
 })
 
-describe('fetchArtworkColor', () => {
-  test("reads the catalog song's artwork colour", async () => {
+describe('fetchArtworkColors', () => {
+  test("reads the catalog song's artwork palette", async () => {
     const paths: string[] = []
     const { mk } = fakeMk(0, [], async (path) => {
       paths.push(path)
-      return { status: 200, data: { data: [{ id: '1', attributes: { artwork: { bgColor: '2b3334' } } }] } }
+      return { status: 200, data: { data: [{ id: '1', attributes: { artwork: { bgColor: '2b3334', textColor1: 'dfb8ac' } } }] } }
     })
-    expect(await fetchArtworkColor(mk, '1456177229')).toBe('#2b3334')
+    expect(await fetchArtworkColors(mk, '1456177229')).toEqual({ bg: '#2b3334', text: ['#dfb8ac'] })
     expect(paths).toEqual(['/v1/catalog/us/songs/1456177229'])
   })
 
   test('throws on a failed lookup (so it can be retried)', async () => {
-    await expect(fetchArtworkColor(fakeMk(0, [], async () => ({ status: 503, data: {} })).mk, '1')).rejects.toThrow('HTTP 503')
+    await expect(fetchArtworkColors(fakeMk(0, [], async () => ({ status: 503, data: {} })).mk, '1')).rejects.toThrow('HTTP 503')
   })
 
   test('undefined for a song not in the catalog or without colour', async () => {
-    expect(await fetchArtworkColor(fakeMk(0, [], async () => ({ status: 404, data: {} })).mk, '1')).toBeUndefined()
-    expect(await fetchArtworkColor(fakeMk(0, [], async () => ({ status: 200, data: { data: [{ id: '1' }] } })).mk, '1')).toBeUndefined()
+    expect(await fetchArtworkColors(fakeMk(0, [], async () => ({ status: 404, data: {} })).mk, '1')).toBeUndefined()
+    expect(await fetchArtworkColors(fakeMk(0, [], async () => ({ status: 200, data: { data: [{ id: '1' }] } })).mk, '1')).toBeUndefined()
   })
 })
 

@@ -1,6 +1,6 @@
 import { whenMusicKitReady, type MusicKitInstance } from '../music/musickit'
 import {
-  fetchArtworkColor,
+  fetchArtworkColors,
   nowPlaying,
   onNowPlaying,
   onPlayback,
@@ -12,7 +12,7 @@ import {
   togglePlay,
   type PlaybackInfo
 } from '../music/player'
-import type { NowPlaying } from '../music/types'
+import type { ArtworkColors, NowPlaying } from '../music/types'
 
 /** Now-playing state from MusicKit events. `start()` once signed in, it returns the cleanup. */
 class Player {
@@ -25,13 +25,13 @@ class Player {
   position = $state(0)
   /** the library playlist we queued last (undefined = the queue came from elsewhere) */
   playlistId = $state<string | undefined>()
-  /** artwork background (`#rrggbb`) of `current`, once known */
-  color = $state<string | undefined>()
+  /** artwork palette of `current`, once known */
+  colors = $state.raw<ArtworkColors | undefined>()
   error = $state<string | undefined>()
   #mk: MusicKitInstance | undefined
   #request = 0
-  /** catalog id -> artwork colour (undefined = the song has none) */
-  #colors = new Map<string, string | undefined>()
+  /** catalog id -> artwork palette (undefined = the song has none) */
+  #palettes = new Map<string, ArtworkColors | undefined>()
   /** a seek in flight: the bar holds `target`, the button shows `resume` (play once it lands?) */
   #seek: { target: number; resume: boolean } | undefined
 
@@ -60,7 +60,7 @@ class Player {
       this.#seek = undefined
       this.current = undefined
       this.playlistId = undefined
-      this.color = undefined
+      this.colors = undefined
     }
   }
 
@@ -123,22 +123,22 @@ class Player {
     this.time = 0
     this.duration = 0
     this.#seek = undefined
-    this.color = item?.color
+    this.colors = item?.colors
     const id = item?.catalogId
-    if (!item || item.color || !id) return
-    if (this.#colors.has(id)) {
-      this.color = this.#colors.get(id)
+    if (!item || item.colors || !id) return
+    if (this.#palettes.has(id)) {
+      this.colors = this.#palettes.get(id)
       return
     }
     const mk = this.#mk
     if (!mk) return
-    fetchArtworkColor(mk, id).then(
-      (color) => {
-        this.#colors.set(id, color)
-        if (this.current?.id === item.id) this.color = color
+    fetchArtworkColors(mk, id).then(
+      (colors) => {
+        this.#palettes.set(id, colors)
+        if (this.current?.id === item.id) this.colors = colors
       },
-      // no tint is fine; not cached, so the next time this song comes up tries again
-      (err) => console.warn('[pod] artwork colour lookup failed:', err)
+      // a plain background is fine; not cached, so the next time this song comes up tries again
+      (err) => console.warn('[pod] artwork palette lookup failed:', err)
     )
   }
 

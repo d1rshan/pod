@@ -10,19 +10,23 @@
   let { playing, disabled = false, onprevious, ontoggle, onnext }: Props = $props()
 </script>
 
+<!-- solid icons, no button chrome (Apple Music style); the stroke rounds the triangles' corners -->
 <div class="transport">
-  <button aria-label="Previous" {disabled} onclick={onprevious}>
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5v14M19 6l-9 6 9 6z" /></svg>
+  <button class="skip" aria-label="Previous" {disabled} onclick={onprevious}>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.5 6.5 2.5 12l9 5.5ZM21.5 6.5l-9 5.5 9 5.5Z" /></svg>
   </button>
   <button class="play" aria-label={playing ? 'Pause' : 'Play'} {disabled} onclick={ontoggle}>
     {#if playing}
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="5.5" y="4" width="4.5" height="16" rx="1.3" />
+        <rect x="14" y="4" width="4.5" height="16" rx="1.3" />
+      </svg>
     {:else}
-      <svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5Z" /></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5 19.5 12 7 19.5Z" /></svg>
     {/if}
   </button>
-  <button aria-label="Next" {disabled} onclick={onnext}>
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 5v14M5 6l9 6-9 6z" /></svg>
+  <button class="skip" aria-label="Next" {disabled} onclick={onnext}>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 6.5l9 5.5-9 5.5ZM12.5 6.5l9 5.5-9 5.5Z" /></svg>
   </button>
 </div>
 
@@ -30,8 +34,7 @@
   .transport {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: var(--space-5);
+    justify-content: space-evenly;
   }
   button {
     display: grid;
@@ -41,8 +44,12 @@
     background: none;
     color: var(--text);
     cursor: pointer;
+    transition:
+      transform 0.15s ease,
+      opacity 0.15s ease;
   }
   button:active:not(:disabled) {
+    transform: scale(0.88);
     opacity: 0.6;
   }
   button:disabled {
@@ -50,29 +57,21 @@
     cursor: default;
   }
   svg {
-    width: 17px;
-    height: 17px;
-    fill: none;
+    fill: currentColor;
     stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
+    stroke-width: 1.6;
     stroke-linejoin: round;
   }
-  .play {
-    width: var(--size-button);
-    height: var(--size-button);
-    padding: 0;
-    border-radius: 50%;
-    background: var(--play-bg);
-    color: var(--play-fg);
+  .skip svg {
+    width: 28px;
+    height: 28px;
   }
   .play svg {
-    width: 13px;
-    height: 13px;
+    width: 34px;
+    height: 34px;
   }
-  .play svg.fill {
-    margin-left: 2px;
-    fill: currentColor;
+  /* the bars have their own rounding */
+  .play rect {
     stroke: none;
   }
 </style>

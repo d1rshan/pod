@@ -6,33 +6,36 @@
   import Status from '../components/Status.svelte'
   import Transport from '../components/Transport.svelte'
 
-  /** px, matches the canvas */
-  const ART_SIZE = 244
+  /** px: image resolution for the cover (the inset content is ~264px wide) */
+  const ART_SIZE = 280
 </script>
 
 {#if player.current}
   {@const song = player.current}
   <section>
-    <div class="art">
-      <Artwork src={song.artwork} size={ART_SIZE} radius="var(--radius-art)" />
+    <!-- full size while playing, eases back when paused -->
+    <div class="art" class:paused={!player.playing}>
+      <Artwork src={song.artwork} size={ART_SIZE} radius="var(--radius-art)" fluid />
     </div>
-    <div class="info">
-      <h1 title={song.title}>{song.title}</h1>
-      <p title={song.artist}>{song.artist}</p>
+    <div class="bottom">
+      <div class="info">
+        <h1 title={song.title}>{song.title}</h1>
+        <p title={song.artist}>{song.artist}</p>
+      </div>
+      <ProgressBar
+        time={player.time}
+        duration={player.duration || song.durationMs / 1000}
+        disabled={player.duration <= 0}
+        onseek={(t) => player.seek(t)}
+      />
+      <Transport
+        playing={player.playing}
+        onprevious={() => player.previous()}
+        ontoggle={() => player.toggle()}
+        onnext={() => player.next()}
+      />
+      {#if player.error}<p class="error">{player.error}</p>{/if}
     </div>
-    <ProgressBar
-      time={player.time}
-      duration={player.duration || song.durationMs / 1000}
-      disabled={player.duration <= 0}
-      onseek={(t) => player.seek(t)}
-    />
-    <Transport
-      playing={player.playing}
-      onprevious={() => player.previous()}
-      ontoggle={() => player.toggle()}
-      onnext={() => player.next()}
-    />
-    {#if player.error}<p class="error">{player.error}</p>{/if}
   </section>
 {:else}
   <Status message="Nothing playing" />
@@ -41,18 +44,35 @@
 
 <style>
   section {
+    height: 100%;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     gap: var(--space-3);
-    padding-top: var(--space-3);
+    /* inset beyond the screen padding: a smaller cover and room around everything */
+    padding: var(--space-3) var(--space-3) var(--space-2);
   }
   .art {
-    align-self: center;
-    margin-bottom: var(--space-1);
+    flex: none;
     border-radius: var(--radius-art);
+    /* soft glow in the artwork colour (--ambient-0, set on the screen) + a tight contact shadow */
     box-shadow:
-      0 20px 34px rgba(0, 0, 0, 0.32),
-      0 8px 14px rgba(0, 0, 0, 0.18);
+      0 18px 36px -14px color-mix(in oklab, var(--ambient-0, #000000) 75%, transparent),
+      0 3px 10px -4px rgba(0, 0, 0, 0.22);
+    transition:
+      transform 0.55s cubic-bezier(0.32, 1.25, 0.5, 1),
+      box-shadow 0.55s ease;
+  }
+  .art.paused {
+    transform: scale(0.84);
+    box-shadow:
+      0 10px 22px -12px color-mix(in oklab, var(--ambient-0, #000000) 75%, transparent),
+      0 2px 6px -3px rgba(0, 0, 0, 0.16);
+  }
+  .bottom {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
   }
   .info {
     min-width: 0;
@@ -89,5 +109,10 @@
     color: var(--text);
     font: inherit;
     cursor: pointer;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .art {
+      transition: none;
+    }
   }
 </style>

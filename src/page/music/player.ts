@@ -1,6 +1,6 @@
 // Playback through the page's MusicKit (full tracks for subscribers, Widevine via castLabs).
-import type { MediaItem, MusicKitInstance } from './musickit'
-import type { NowPlaying } from './types'
+import type { ApiArtwork, MediaItem, MusicKitInstance } from './musickit'
+import type { ArtworkColors, NowPlaying } from './types'
 
 /** MusicKit.PlaybackStates.playing */
 const PLAYING = 2
@@ -66,6 +66,16 @@ export function toColor(hex: string | undefined): string | undefined {
   return hex && /^[0-9a-f]{6}$/i.test(hex) ? `#${hex.toLowerCase()}` : undefined
 }
 
+/** the artwork's palette, undefined without a valid background colour */
+export function toArtworkColors(artwork: ApiArtwork | undefined): ArtworkColors | undefined {
+  const bg = toColor(artwork?.bgColor)
+  if (!bg || !artwork) return undefined
+  const text = [artwork.textColor1, artwork.textColor2, artwork.textColor3, artwork.textColor4]
+    .map(toColor)
+    .filter((c) => c !== undefined)
+  return { bg, text }
+}
+
 export function toNowPlaying(item: MediaItem): NowPlaying {
   const a = item.attributes
   return {
@@ -74,7 +84,7 @@ export function toNowPlaying(item: MediaItem): NowPlaying {
     artist: a?.artistName ?? '',
     artwork: a?.artwork?.url,
     durationMs: a?.durationInMillis ?? 0,
-    color: toColor(a?.artwork?.bgColor),
+    colors: toArtworkColors(a?.artwork),
     catalogId: a?.playParams?.catalogId
   }
 }
@@ -107,16 +117,16 @@ export function onNowPlaying(mk: MusicKitInstance, cb: (item: NowPlaying | undef
 }
 
 /**
- * The catalog song's artwork background (`#rrggbb`), undefined if it has none (or isn't in this
- * storefront: 404). Throws on other failures, so they can be retried.
+ * The catalog song's artwork palette, undefined if it has none (or isn't in this storefront: 404).
+ * Throws on other failures, so they can be retried.
  */
-export async function fetchArtworkColor(mk: MusicKitInstance, catalogId: string): Promise<string | undefined> {
+export async function fetchArtworkColors(mk: MusicKitInstance, catalogId: string): Promise<ArtworkColors | undefined> {
   const path = `/v1/catalog/${mk.storefrontId}/songs/${encodeURIComponent(catalogId)}`
   const res = await mk.api.music(path)
   if (res.status === 404) return undefined
   if (res.status < 200 || res.status >= 300) throw new Error(`${path}: HTTP ${res.status}`)
   const song = (res.data as { data?: MediaItem[] } | undefined)?.data?.[0]
-  return toColor(song?.attributes?.artwork?.bgColor)
+  return toArtworkColors(song?.attributes?.artwork)
 }
 
 export async function skipNext(mk: MusicKitInstance): Promise<void> {

@@ -4,12 +4,14 @@
   interface Props {
     /** Apple artwork URL template; a placeholder is shown without one */
     src?: string
-    /** CSS pixels (square) */
+    /** CSS pixels (square); with `fluid`, only the image resolution */
     size: number
     radius?: string
+    /** fills its container's width (square) instead of `size` */
+    fluid?: boolean
   }
 
-  let { src, size, radius = 'var(--radius-thumb)' }: Props = $props()
+  let { src, size, radius = 'var(--radius-thumb)', fluid = false }: Props = $props()
   let failed = $state(false)
 
   const url = $derived(src ? artworkUrl(src, size * Math.min(window.devicePixelRatio || 1, 2)) : undefined)
@@ -19,7 +21,13 @@
   })
 </script>
 
-<div class="art" style:width="{size}px" style:height="{size}px" style:border-radius={radius}>
+<div
+  class="art"
+  class:fluid
+  style:width={fluid ? undefined : `${size}px`}
+  style:height={fluid ? undefined : `${size}px`}
+  style:border-radius={radius}
+>
   {#if url && !failed}
     <img src={url} alt="" loading="lazy" decoding="async" onerror={() => (failed = true)} />
   {:else}
@@ -39,6 +47,10 @@
     color: var(--text-tertiary);
     display: grid;
     place-items: center;
+  }
+  .fluid {
+    width: 100%;
+    aspect-ratio: 1;
   }
   img {
     width: 100%;

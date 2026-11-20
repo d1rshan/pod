@@ -25,8 +25,15 @@ export interface NowPlaying {
   artwork?: string
   /** 0 = unknown */
   durationMs: number
-  /** artwork background as `#rrggbb` when the item carries one (catalog songs do, library songs don't) */
-  color?: string
-  /** catalog id, to look up `color` for library songs */
+  /** artwork palette as `#rrggbb` (background first, then its text colours) when the item carries
+   * one: catalog songs do, library songs don't. See `ArtworkColors`. */
+  colors?: ArtworkColors
+  /** catalog id, to look up `colors` for library songs */
   catalogId?: string
+}
+
+/** Apple's artwork palette: `bg` is the cover's background, `text` the colours picked to read on it */
+export interface ArtworkColors {
+  bg: string
+  text: string[]
 }

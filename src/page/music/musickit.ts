@@ -35,6 +35,16 @@ export interface MusicKitInstance {
   readonly api: { music(path: string, params?: ApiParams): Promise<ApiResponse> }
 }
 
+/** Apple artwork: URL template + palette (`rrggbb`, catalog resources only) */
+export interface ApiArtwork {
+  readonly url?: string
+  readonly bgColor?: string
+  readonly textColor1?: string
+  readonly textColor2?: string
+  readonly textColor3?: string
+  readonly textColor4?: string
+}
+
 /** a queue item (song) */
 export interface MediaItem {
   readonly id: string
@@ -42,7 +52,7 @@ export interface MediaItem {
     readonly name?: string
     readonly artistName?: string
     readonly durationInMillis?: number
-    readonly artwork?: { readonly url?: string; readonly bgColor?: string }
+    readonly artwork?: ApiArtwork
     readonly playParams?: { readonly catalogId?: string }
   }
 }
