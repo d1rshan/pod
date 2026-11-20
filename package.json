@@ -1,0 +1,48 @@
+{
+  "name": "pod",
+  "version": "0.0.1",
+  "description": "A tiny iPod-style Apple Music player",
+  "private": true,
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
+    "typecheck:web": "svelte-check --tsconfig ./tsconfig.web.json",
+    "typecheck": "bun run typecheck:node && bun run typecheck:web",
+    "dist": "electron-vite build && electron-builder --linux AppImage"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@tsconfig/svelte": "^5.0.9",
+    "@types/node": "^26.6.6",
+    "electron": "github:castlabs/electron-releases#v45.2.1+wvcus",
+    "electron-builder": "^26.18.0",
+    "electron-vite": "^6.0.0",
+    "svelte": "^5.58.1",
+    "svelte-check": "^4.7.8",
+    "typescript": "5",
+    "vite": "^8.3.8"
+  },
+  "build": {
+    "appId": "dev.pod.app",
+    "productName": "pod",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*",
+      "package.json"
+    ],
+    "electronDownload": {
+      "mirror": "https://github.com/castlabs/electron-releases/releases/download/v"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Audio"
+    }
+  }
+}
