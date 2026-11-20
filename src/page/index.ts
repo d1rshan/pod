@@ -10,6 +10,7 @@ const HOST_ID = 'pod-root'
 
 // Apple's DOM stays alive for MusicKit, just hidden (spec: hidden, not deleted).
 const HIDE_APPLE_CSS = `
+  html, body { background: transparent !important; }
   body > :not(#${HOST_ID}) { display: none !important; }
   #${HOST_ID} { position: fixed; inset: 0; z-index: 2147483647; }
 `

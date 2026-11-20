@@ -36,9 +36,13 @@ async function injectPage(win: BrowserWindow): Promise<void> {
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
-    width: 320,
-    height: 520,
+    // 320x520 screen + the graphite bezel drawn by the page (tokens: --size-bezel)
+    width: 340,
+    height: 540,
     frame: false,
+    // the bezel's rounded corners need a see-through window
+    transparent: true,
+    backgroundColor: '#00000000',
     resizable: false,
     alwaysOnTop: true,
     show: false,

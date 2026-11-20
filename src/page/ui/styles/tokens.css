@@ -33,6 +33,14 @@
   --tracking-title: -0.8px;
   --tracking-name: -0.55px;
 
+  /* device frame (graphite bezel, same in light and dark) */
+  --frame-bg: linear-gradient(150deg, #4b4c50 0%, #2d2e31 45%, #1c1d1f 100%);
+  --frame-edge: #0d0d0f;
+  --frame-highlight: rgba(255, 255, 255, 0.16);
+  --frame-screen-edge: rgba(0, 0, 0, 0.7);
+  --size-bezel: 10px;
+  --radius-device: 38px;
+
   --radius-window: 25px;
   --radius-icon: 18px;
   --radius-art: 15px;
@@ -76,7 +84,6 @@
 .pod {
   width: 100%;
   height: 100%;
-  background: var(--bg);
   color: var(--text);
   font-family: var(--font);
   font-size: var(--text-body);

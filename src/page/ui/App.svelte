@@ -41,28 +41,52 @@
   })
 </script>
 
-{#if auth.status === 'signed-in'}
-  <div class="shell">
-    <header><TabBar /></header>
-    <main bind:this={scroller} onscroll={() => scroller && scrollTops.set(screen, scroller.scrollTop)}>
-      {#if screen.name === 'playing'}
-        <Playing />
-      {:else if screen.name === 'library'}
-        <Library />
-      {:else if screen.name === 'playlist'}
-        {#key screen.playlist.id}
-          <Playlist playlist={screen.playlist} />
-        {/key}
-      {:else}
-        <Discover />
-      {/if}
-    </main>
+<!-- device frame: graphite bezel (drag handle) around the screen -->
+<div class="device">
+  <div class="screen">
+    {#if auth.status === 'signed-in'}
+      <div class="shell">
+        <header><TabBar /></header>
+        <main bind:this={scroller} onscroll={() => scroller && scrollTops.set(screen, scroller.scrollTop)}>
+          {#if screen.name === 'playing'}
+            <Playing />
+          {:else if screen.name === 'library'}
+            <Library />
+          {:else if screen.name === 'playlist'}
+            {#key screen.playlist.id}
+              <Playlist playlist={screen.playlist} />
+            {/key}
+          {:else}
+            <Discover />
+          {/if}
+        </main>
+      </div>
+    {:else}
+      <SignIn />
+    {/if}
   </div>
-{:else}
-  <SignIn />
-{/if}
+</div>
 
 <style>
+  .device {
+    height: 100%;
+    padding: var(--size-bezel);
+    border-radius: var(--radius-device);
+    background: var(--frame-bg);
+    box-shadow:
+      inset 0 0 0 1px var(--frame-edge),
+      inset 0 2px 1px var(--frame-highlight);
+    -webkit-app-region: drag;
+  }
+  .screen {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+    border-radius: calc(var(--radius-device) - var(--size-bezel));
+    background: var(--bg);
+    box-shadow: 0 0 0 1px var(--frame-screen-edge);
+    -webkit-app-region: no-drag;
+  }
   .shell {
     height: 100%;
     display: flex;
