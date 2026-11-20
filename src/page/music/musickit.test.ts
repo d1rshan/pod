@@ -4,6 +4,12 @@ import { isAuthorizationError, signIn, type MusicKitInstance } from './musickit'
 const fakeMk = (authorize: () => Promise<void>, isAuthorized = false): MusicKitInstance => ({
   isAuthorized,
   authorize,
+  playbackState: 0,
+  currentPlaybackTime: 0,
+  currentPlaybackDuration: 0,
+  setQueue: async () => {},
+  play: async () => {},
+  pause() {},
   addEventListener() {},
   removeEventListener() {}
 })

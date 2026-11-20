@@ -24,7 +24,7 @@ each step = one session. "done when" = what the user checks before merging.
   - session persisted in `persist:pod`
   - done when: sign in once, restart app, still signed in
 
-- [ ] **2. playback spike**
+- [x] **2. playback spike**
   - `music/player.ts`: play one hard-coded song
   - verify full-length playback (past 30s preview) via `eval` on playback time
   - quick check: can we fetch synced lyrics through the page's MusicKit?
@@ -75,3 +75,6 @@ Gotcha: Apple's CSP allows inline styles + no Trusted Types, so Svelte `css: 'in
 
 **1:** main waits for Widevine (capped 10s), allows only Apple auth popups (`isAppleAuthUrl`: authorize.music / activate / idmsa / appleid / `pNN-buy.itunes`), popup locked to those hosts. Page: `music/musickit.ts` (wait for instance, `authorize()`, auth events) -> `state/auth.svelte.ts` -> `screens/SignIn.svelte`.
 Gotchas: window.open children ignore `session.setUserAgent` (Apple's popup rendered blank) - UA is stripped via `app.userAgentFallback`. Closing the popup rejects `authorize()` with `AUTHORIZATION_ERROR` (treated as cancel). Blocked popup navigations are logged as `[pod] blocked sign-in popup navigation`. Some accounts (India, `myacinfo-alt`) get `media-user-token` only on .authorize.music.apple.com -> auth/v2/web 403 -> MusicKit signs out; on popup close main copies those cookies to .apple.com and reloads (`signInCookies.ts`). Next: step 2.
+
+**2:** `music/player.ts` (setQueue/play/pause/playback events) -> `state/player.svelte.ts` (spike: hard-coded Blinding Lights `1488408568`) -> placeholder buttons in `App.svelte`. Full track plays (40s+ of 3:22, `previewOnly: false`).
+Gotcha: `setQueue` can outlast the click's user activation -> stuck in `loading`; main sets `autoplayPolicy: 'no-user-gesture-required'`. Lyrics: feasible - `mk.api.music('/v1/catalog/{sf}/songs/{id}/lyrics')` returns line-timed TTML (`<p begin end>`), `syncedLyrics` is 400; songs have `hasTimeSyncedLyrics`. Next: step 3.

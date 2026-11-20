@@ -23,6 +23,7 @@ class Auth {
     }, SLOW_LOAD_MS)
     whenMusicKitReady(ctl.signal).then(
       (mk) => {
+        if (ctl.signal.aborted) return
         clearTimeout(slow)
         this.#mk = mk
         this.status = mk.isAuthorized ? 'signed-in' : 'signed-out'

@@ -6,6 +6,15 @@ import { waitFor } from './waitFor'
 export interface MusicKitInstance {
   readonly isAuthorized: boolean
   authorize(): Promise<string | void>
+  /** MusicKit.PlaybackStates enum (2 = playing, 3 = paused, ...) */
+  readonly playbackState: number
+  /** seconds */
+  readonly currentPlaybackTime: number
+  /** seconds */
+  readonly currentPlaybackDuration: number
+  setQueue(options: { song: string; startPlaying?: boolean }): Promise<unknown>
+  play(): Promise<void>
+  pause(): void
   addEventListener(name: string, cb: () => void): void
   removeEventListener(name: string, cb: () => void): void
 }

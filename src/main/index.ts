@@ -47,7 +47,9 @@ function createWindow(): BrowserWindow {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      partition: PARTITION
+      partition: PARTITION,
+      // setQueue() can outlast a click's user activation; media keys / auto-advance have none
+      autoplayPolicy: 'no-user-gesture-required'
     }
   })
 

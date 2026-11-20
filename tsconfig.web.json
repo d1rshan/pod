@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src/page/**/*", "src/page/**/*.svelte"]
+  "include": ["src/page/**/*", "src/page/**/*.svelte", "src/shared/**/*"]
 }
