@@ -1,5 +1,5 @@
 /**
- * Inspect the running dev app over CDP (start it first: `nix develop --command bun dev`).
+ * Runs on Node (Playwright CDP hangs under Bun). Inspect the running dev app over CDP (start it first: `nix develop --command bun dev`).
  *
  *   bun run inspect shot [file]        screenshot (default: .inspect/shot.png)
  *   bun run inspect logs [seconds]     reload the page and print console output + errors (default 5s)
@@ -69,8 +69,15 @@ switch (cmd) {
   }
   case 'click': {
     if (!arg) throw new Error('usage: inspect click "<selector>"')
-    await page.locator(arg).first().click()
-    console.log(`clicked ${arg}`)
+    await page
+      .locator(arg)
+      .first()
+      .click({ timeout: 5000 })
+      .then(() => console.log(`clicked ${arg}`))
+      .catch(() => {
+        console.error(`no clickable element matches: ${arg}`)
+        process.exit(1)
+      })
     break
   }
   case 'state': {

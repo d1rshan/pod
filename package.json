@@ -13,7 +13,7 @@
     "typecheck": "bun run typecheck:node && bun run typecheck:web",
     "dist": "electron-vite build && electron-builder --linux AppImage",
     "test": "bun test",
-    "inspect": "bun scripts/inspect.ts",
+    "inspect": "node scripts/inspect.mts",
     "check": "bun run typecheck && bun test && bun run build"
   },
   "devDependencies": {

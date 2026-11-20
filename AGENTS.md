@@ -45,7 +45,7 @@ scripts/     # dev tooling (inspect)
 nix develop --command bun dev   # run the app (NixOS: always inside the dev shell)
 bun run check                   # typecheck + tests + build (run before every PR)
 bun test                        # unit tests (*.test.ts next to the code)
-bun run inspect <cmd>           # drive the RUNNING dev app over CDP (port 9222)
+bun run inspect <cmd>           # drive the RUNNING dev app over CDP (port 9222; runs on node - playwright hangs under bun)
 ```
 
 `inspect` commands:
