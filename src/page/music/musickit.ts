@@ -14,14 +14,37 @@ export interface MusicKitInstance {
   readonly currentPlaybackDuration: number
   setQueue(options: QueueOptions): Promise<unknown>
   /** the current queue (`items[i].id` = library/catalog song id) */
-  readonly queue: { readonly items: readonly { readonly id: string }[]; readonly position: number }
+  readonly queue: {
+    readonly items: readonly MediaItem[]
+    readonly position: number
+    /** the item at `position` (set before playback starts too) */
+    readonly currentItem?: MediaItem
+  }
   changeToMediaAtIndex(index: number): Promise<unknown>
+  skipToNextItem(): Promise<unknown>
+  skipToPreviousItem(): Promise<unknown>
+  /** seconds */
+  seekToTime(time: number): Promise<unknown>
+  /** e.g. `us`, for /v1/catalog/{storefront}/... */
+  readonly storefrontId: string
   play(): Promise<void>
   pause(): void
   addEventListener(name: string, cb: () => void): void
   removeEventListener(name: string, cb: () => void): void
   /** Apple Music API through the page's tokens; non-2xx (e.g. 404) resolves, it doesn't throw */
   readonly api: { music(path: string, params?: ApiParams): Promise<ApiResponse> }
+}
+
+/** a queue item (song) */
+export interface MediaItem {
+  readonly id: string
+  readonly attributes?: {
+    readonly name?: string
+    readonly artistName?: string
+    readonly durationInMillis?: number
+    readonly artwork?: { readonly url?: string; readonly bgColor?: string }
+    readonly playParams?: { readonly catalogId?: string }
+  }
 }
 
 export interface QueueOptions {

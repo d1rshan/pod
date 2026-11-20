@@ -11,6 +11,7 @@
   import Playing from './screens/Playing.svelte'
   import Playlist from './screens/Playlist.svelte'
   import SignIn from './screens/SignIn.svelte'
+  import { tintStyle } from './tint'
 
   onMount(() => auth.start())
 
@@ -28,6 +29,8 @@
   })
 
   const screen = $derived(nav.screen)
+  /** the playing screen takes the artwork's colour (tabs included) */
+  const tint = $derived(screen.name === 'playing' ? tintStyle(player.color) : '')
   let scroller = $state<HTMLElement>()
   /** scroll position per stack entry: back/tab switch restores it, a new screen starts at the top */
   const scrollTops = new WeakMap<Screen, number>()
@@ -45,7 +48,7 @@
 <div class="device">
   <div class="screen">
     {#if auth.status === 'signed-in'}
-      <div class="shell">
+      <div class="shell" class:tinted={tint !== ''} style={tint}>
         <header><TabBar /></header>
         <main bind:this={scroller} onscroll={() => scroller && scrollTops.set(screen, scroller.scrollTop)}>
           {#if screen.name === 'playing'}
@@ -91,6 +94,13 @@
     height: 100%;
     display: flex;
     flex-direction: column;
+    color: var(--text);
+    background-color: var(--bg);
+  }
+  .shell.tinted {
+    background-color: var(--tint);
+    /* light from the top, falling off to near-black at the bottom */
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 45%, rgba(0, 0, 0, 0.45) 100%);
   }
   header {
     flex: none;

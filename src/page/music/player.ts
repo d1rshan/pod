@@ -1,8 +1,12 @@
 // Playback through the page's MusicKit (full tracks for subscribers, Widevine via castLabs).
-import type { MusicKitInstance } from './musickit'
+import type { MediaItem, MusicKitInstance } from './musickit'
+import type { NowPlaying } from './types'
 
 /** MusicKit.PlaybackStates.playing */
 const PLAYING = 2
+
+/** seconds into a song after which "previous" restarts it instead of going back */
+export const RESTART_AFTER = 3
 
 export interface PlaybackInfo {
   playing: boolean
@@ -55,4 +59,83 @@ export function onPlayback(mk: MusicKitInstance, cb: (info: PlaybackInfo) => voi
   return () => {
     for (const name of events) mk.removeEventListener(name, handler)
   }
+}
+
+/** `#rrggbb` from Apple's `rrggbb`, undefined for anything else */
+export function toColor(hex: string | undefined): string | undefined {
+  return hex && /^[0-9a-f]{6}$/i.test(hex) ? `#${hex.toLowerCase()}` : undefined
+}
+
+export function toNowPlaying(item: MediaItem): NowPlaying {
+  const a = item.attributes
+  return {
+    id: item.id,
+    title: a?.name ?? 'Unknown',
+    artist: a?.artistName ?? '',
+    artwork: a?.artwork?.url,
+    durationMs: a?.durationInMillis ?? 0,
+    color: toColor(a?.artwork?.bgColor),
+    catalogId: a?.playParams?.catalogId
+  }
+}
+
+/**
+ * Which row of a list is the current song: the one with its id nearest the queue position
+ * (a song can be in a list twice; the queue can be shifted by dropped tracks). -1 = none.
+ */
+export function currentIndex(ids: readonly string[], currentId: string, position: number): number {
+  let best = -1
+  ids.forEach((id, i) => {
+    if (id === currentId && (best < 0 || Math.abs(i - position) < Math.abs(best - position))) best = i
+  })
+  return best
+}
+
+export function nowPlaying(mk: MusicKitInstance): NowPlaying | undefined {
+  const item = mk.queue.currentItem
+  return item ? toNowPlaying(item) : undefined
+}
+
+/** Calls `cb` when the current song changes. Returns an unsubscribe function. */
+export function onNowPlaying(mk: MusicKitInstance, cb: (item: NowPlaying | undefined) => void): () => void {
+  const handler = (): void => cb(nowPlaying(mk))
+  const events = ['nowPlayingItemDidChange', 'queueItemsDidChange', 'queuePositionDidChange']
+  for (const name of events) mk.addEventListener(name, handler)
+  return () => {
+    for (const name of events) mk.removeEventListener(name, handler)
+  }
+}
+
+/**
+ * The catalog song's artwork background (`#rrggbb`), undefined if it has none (or isn't in this
+ * storefront: 404). Throws on other failures, so they can be retried.
+ */
+export async function fetchArtworkColor(mk: MusicKitInstance, catalogId: string): Promise<string | undefined> {
+  const path = `/v1/catalog/${mk.storefrontId}/songs/${encodeURIComponent(catalogId)}`
+  const res = await mk.api.music(path)
+  if (res.status === 404) return undefined
+  if (res.status < 200 || res.status >= 300) throw new Error(`${path}: HTTP ${res.status}`)
+  const song = (res.data as { data?: MediaItem[] } | undefined)?.data?.[0]
+  return toColor(song?.attributes?.artwork?.bgColor)
+}
+
+export async function skipNext(mk: MusicKitInstance): Promise<void> {
+  await mk.skipToNextItem()
+}
+
+/** Restarts the song once it's past `RESTART_AFTER` seconds (or it's the first), else goes back one. */
+export async function skipPrevious(mk: MusicKitInstance): Promise<void> {
+  if (mk.currentPlaybackTime > RESTART_AFTER || mk.queue.position <= 0) await mk.seekToTime(0)
+  else await mk.skipToPreviousItem()
+}
+
+/**
+ * Jumps to `seconds`. MusicKit keeps playing the old position until the new one has loaded
+ * (seconds, for an unbuffered spot), so playback pauses meanwhile; afterwards it plays again
+ * if `resume()` says so (asked then, so a pause or newer seek in the meantime wins).
+ */
+export async function seek(mk: MusicKitInstance, seconds: number, resume: () => boolean): Promise<void> {
+  if (mk.playbackState === PLAYING) mk.pause()
+  await mk.seekToTime(Math.max(0, seconds))
+  if (resume()) await mk.play()
 }

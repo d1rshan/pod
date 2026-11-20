@@ -1,5 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte'
+  import { currentIndex } from '../../music/player'
   import type { Playlist } from '../../music/types'
   import { library } from '../../state/library.svelte'
   import { nav } from '../../state/nav.svelte'
@@ -19,6 +20,16 @@
   let { playlist }: Props = $props()
 
   const tracks = $derived(library.tracks[playlist.id] ?? { loading: true })
+  /** the playing song's row, only while the queue is this playlist */
+  const activeIndex = $derived.by(() => {
+    const song = player.current
+    if (!song || player.playlistId !== playlist.id || !tracks.data) return -1
+    return currentIndex(
+      tracks.data.map((t) => t.id),
+      song.id,
+      player.position
+    )
+  })
   const count = $derived(tracks.data ? `${tracks.data.length} ${tracks.data.length === 1 ? 'song' : 'songs'}` : '')
 
   // refresh on open (cached tracks stay visible meanwhile)
@@ -41,17 +52,30 @@
   </div>
 </header>
 
+{#snippet toggle()}
+  <button class="play small" aria-label={player.playing ? 'Pause' : 'Play'} onclick={() => player.toggle()}>
+    {#if player.playing}
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>
+    {:else}
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5Z" /></svg>
+    {/if}
+  </button>
+{/snippet}
+
 {#if player.error}<p class="error">{player.error}</p>{/if}
 
 {#if tracks.data?.length}
   <ol>
     {#each tracks.data as track, i (`${i}:${track.id}`)}
+      {@const active = i === activeIndex}
       <li>
         <ListRow
           title={track.title}
           subtitle={track.artist}
           artwork={track.artwork}
-          onclick={() => player.playPlaylist(playlist.id, i, track.id)}
+          {active}
+          trailing={active ? toggle : undefined}
+          onclick={() => (active ? player.toggle() : player.playPlaylist(playlist.id, i, track.id))}
         />
       </li>
     {/each}
@@ -104,6 +128,14 @@
     background: var(--play-bg);
     color: var(--play-fg);
     cursor: pointer;
+  }
+  .play.small {
+    flex: none;
+    margin-top: 0;
+    padding: 0;
+  }
+  .play.small:active {
+    opacity: 0.6;
   }
   .play:disabled {
     opacity: 0.4;

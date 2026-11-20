@@ -18,6 +18,10 @@ function fakeMk(respond: (path: string, params?: ApiParams) => ApiResponse) {
     removeEventListener() {},
     queue: { items: [], position: 0 },
     changeToMediaAtIndex: async () => {},
+    skipToNextItem: async () => {},
+    skipToPreviousItem: async () => {},
+    seekToTime: async () => {},
+    storefrontId: 'us',
     api: {
       music: async (path: string, params?: ApiParams) => {
         calls.push([path, params])

@@ -37,7 +37,7 @@ each step = one session. "done when" = what the user checks before merging.
   - tap a track -> play playlist from that track
   - done when: browse playlists, open one, tap a song and it plays
 
-- [ ] **4. playing screen**
+- [x] **4. playing screen**
   - `state/player.svelte.ts`: now playing, progress, playing/paused (from MusicKit events)
   - artwork with tinted bg (Apple artwork `bgColor`), title/artist, `ProgressBar`, `Transport`
   - active song highlighted in playlist detail
@@ -81,3 +81,6 @@ Gotcha: `setQueue` can outlast the click's user activation -> stuck in `loading`
 
 **3:** `music/library.ts` (paged `/v1/me/library/playlists` + `/tracks`, follows `next`) -> `state/library.svelte.ts`; `state/navStack.ts` (pure tabs + stacks, re-tap tab = root) behind `state/nav.svelte.ts`; `TabBar`, `ListRow`, `Artwork`, `BackLink`, `Status`. Tap a track -> `setQueue({ playlist, startWith: i })`; if the queue item there isn't the tapped id, `changeToMediaAtIndex` to it. Scroll kept per stack entry. Playing/Discover tabs are placeholders.
 Gotchas: `mk.api.music` resolves (doesn't throw) on non-2xx -> check `res.status`; 404 = empty. Generated playlist covers are fixed URLs (no `{w}x{h}`). Inter is inlined as a data: URL `@font-face` in the document head (CSP blocks Google Fonts; shadow roots ignore `@font-face`). Next: step 4.
+
+**4:** `music/player.ts` gains now-playing (`queue.currentItem`, set before playback too), skip/seek (previous restarts past 3s), `currentIndex` -> `state/player.svelte.ts` (`current`, `position`, `playlistId`, `color`). Playing screen + `ProgressBar` (range input) + `Transport`; `ui/tint.ts` turns the artwork colour into token overrides on the whole shell (tabs included), black text on light covers. Playlist highlight only while the queue is that playlist, nearest copy to the queue position; tapping it toggles.
+Gotchas: library songs have no artwork `bgColor` -> looked up via `/v1/catalog/{sf}/songs/{playParams.catalogId}` (cached; failures retried, 404 = none). A seek to an unbuffered spot takes seconds, and MusicKit keeps playing the old position meanwhile, so `seek` pauses, seeks, then resumes; the store holds the bar and button on the target until it lands. Next: step 5.
