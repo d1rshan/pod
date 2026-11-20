@@ -61,7 +61,7 @@
 {#if tracks.error}
   <Status message={tracks.error} retry={() => library.loadTracks(playlist.id)} />
 {:else if !tracks.data}
-  <Status message="Loading…" />
+  <Status loading />
 {:else if tracks.data.length === 0}
   <Status message="This playlist is empty" />
 {/if}

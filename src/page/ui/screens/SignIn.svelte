@@ -1,5 +1,6 @@
 <script lang="ts">
   import { auth } from '../../state/auth.svelte'
+  import Spinner from '../components/Spinner.svelte'
 
   const loading = $derived(auth.status === 'loading')
   const unavailable = $derived(auth.status === 'unavailable')
@@ -29,9 +30,9 @@
   {:else}
     <button disabled={loading || auth.signingIn} onclick={() => auth.signIn()}>
       {#if loading}
-        Loading…
+        <Spinner size={16} />
       {:else if auth.signingIn}
-        Signing in…
+        <Spinner size={14} label="Signing in" /> Signing in…
       {:else}
         Sign in with Apple Music
       {/if}
@@ -79,6 +80,10 @@
     -webkit-app-region: no-drag;
     width: 100%;
     height: var(--size-button);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
     border: 0;
     border-radius: var(--radius-tabs);
     background: var(--play-bg);

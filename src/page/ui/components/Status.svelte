@@ -1,15 +1,20 @@
 <script lang="ts">
+  import Spinner from './Spinner.svelte'
+
   interface Props {
-    message: string
+    message?: string
+    /** shows the spinner */
+    loading?: boolean
     /** shows a "Try again" button */
     retry?: () => void
   }
 
-  let { message, retry }: Props = $props()
+  let { message, loading = false, retry }: Props = $props()
 </script>
 
 <div>
-  <p>{message}</p>
+  {#if loading}<Spinner />{/if}
+  {#if message}<p>{message}</p>{/if}
   {#if retry}<button onclick={retry}>Try again</button>{/if}
 </div>
 
@@ -21,8 +26,6 @@
     align-items: center;
     gap: var(--space-2);
     text-align: center;
-  }
-  p {
     color: var(--text-secondary);
   }
   button {

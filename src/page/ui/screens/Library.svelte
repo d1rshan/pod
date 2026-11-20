@@ -33,7 +33,7 @@
 {#if playlists.error}
   <Status message={playlists.error} retry={() => library.loadPlaylists()} />
 {:else if !playlists.data}
-  <Status message="Loading…" />
+  <Status loading />
 {:else if playlists.data.length === 0}
   <Status message="No playlists in your library yet" />
 {/if}
