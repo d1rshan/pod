@@ -7,6 +7,8 @@ bun install
 bun run dev
 ```
 
+See `AGENTS.md` for architecture, commands, and workflow.
+
 **NixOS:** needs `programs.nix-ld.enable = true`. Run inside the dev shell, which provides Electron's libraries:
 
 ```sh

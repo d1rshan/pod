@@ -10,3 +10,4 @@ release/
 # private
 plan.md
 *.tsbuildinfo
+.inspect/
