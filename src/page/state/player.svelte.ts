@@ -6,6 +6,7 @@ import {
   onPlayback,
   playbackInfo,
   playPlaylist,
+  preciseTime,
   seek,
   skipNext,
   skipPrevious,
@@ -13,6 +14,13 @@ import {
   type PlaybackInfo
 } from '../music/player'
 import type { ArtworkColors, NowPlaying } from '../music/types'
+
+/** s: how far the precise playhead may be from the (rounded, ~4/s) reported time and still be trusted */
+const NOW_TOLERANCE = 1.5
+/** after a song change MusicKit briefly reports the old song's time: for this long (ms), times past
+ * `STALE_AFTER` s are ignored, until it reports one near the start */
+const STALE_MS = 2000
+const STALE_AFTER = 2
 
 /** Now-playing state from MusicKit events. `start()` once signed in, it returns the cleanup. */
 class Player {
@@ -34,6 +42,8 @@ class Player {
   #palettes = new Map<string, ArtworkColors | undefined>()
   /** a seek in flight: the bar holds `target`, the button shows `resume` (play once it lands?) */
   #seek: { target: number; resume: boolean } | undefined
+  /** see `STALE_MS` (0 = not waiting) */
+  #staleUntil = 0
 
   start(): () => void {
     const ctl = new AbortController()
@@ -42,7 +52,8 @@ class Player {
       (mk) => {
         if (ctl.signal.aborted) return
         this.#mk = mk
-        this.#setCurrent(nowPlaying(mk), mk.queue.position)
+        // already playing (e.g. the UI reloaded): its time is real
+        this.#setCurrent(nowPlaying(mk), mk.queue.position, false)
         this.#update(playbackInfo(mk))
         unsubscribe.push(
           onPlayback(mk, (info) => this.#update(info)),
@@ -92,12 +103,23 @@ class Player {
     await this.#run("Couldn't skip. Try again.", skipPrevious)
   }
 
+  /** the playhead to the millisecond, read fresh (per animation frame); seconds */
+  now(): number {
+    if (this.#seek) return this.#seek.target
+    if (!this.#mk) return this.time
+    // right after a song change MusicKit and its audio can still be on the old song: until they
+    // agree with the reported time (reset to 0 then, otherwise a few hundred ms behind), use that
+    const t = preciseTime(this.#mk)
+    return Math.abs(t - this.time) <= NOW_TOLERANCE ? t : this.time
+  }
+
   /** seconds */
   async seek(time: number): Promise<void> {
     if (!this.#mk) return
     // a seek during another keeps that one's intent (it already paused playback)
     const s = { target: time, resume: this.#seek?.resume ?? this.playing }
     this.#seek = s
+    this.#staleUntil = 0 // the user picked this time: it isn't left over from the last song
     this.time = time
     this.playing = s.resume
     await this.#run("Couldn't seek. Try again.", seek, time, () => this.#seek === s && s.resume)
@@ -107,6 +129,13 @@ class Player {
   }
 
   #update({ playing, time, duration }: PlaybackInfo): void {
+    if (this.#staleUntil) {
+      if (performance.now() < this.#staleUntil && time > STALE_AFTER) {
+        this.playing = playing
+        return
+      }
+      this.#staleUntil = 0
+    }
     this.duration = duration
     // while a seek loads MusicKit reports the old position and "paused"; hold the target instead
     if (this.#seek) return
@@ -114,7 +143,7 @@ class Player {
     this.time = time
   }
 
-  #setCurrent(item: NowPlaying | undefined, position: number): void {
+  #setCurrent(item: NowPlaying | undefined, position: number, changed = true): void {
     this.position = position
     // queue events repeat for the same song; keep the object so dependents don't re-run
     if (item?.id === this.current?.id) return
@@ -123,6 +152,7 @@ class Player {
     this.time = 0
     this.duration = 0
     this.#seek = undefined
+    this.#staleUntil = changed && item ? performance.now() + STALE_MS : 0
     this.colors = item?.colors
     const id = item?.catalogId
     if (!item || item.colors || !id) return

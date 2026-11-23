@@ -10,6 +10,7 @@ import {
   playbackInfo,
   playPlaylist,
   playSong,
+  preciseTime,
   skipNext,
   skipPrevious,
   seek,
@@ -180,6 +181,12 @@ describe('toNowPlaying', () => {
     expect(toNowPlaying({ id: '1', attributes: { artwork: { bgColor: 'aabbcc' } } }).colors).toEqual({ bg: '#aabbcc', text: [] })
     expect(toNowPlaying({ id: '1' })).toMatchObject({ id: '1', title: 'Unknown', artist: '', durationMs: 0 })
   })
+
+  test('a catalog song is its own catalog id; an upload has none', () => {
+    expect(toNowPlaying({ id: '1488408568', type: 'song', attributes: { playParams: {} } }).catalogId).toBe('1488408568')
+    expect(toNowPlaying({ id: 'i.upload', type: 'song' }).catalogId).toBeUndefined()
+    expect(toNowPlaying({ id: '1544490785', type: 'musicVideo' }).catalogId).toBeUndefined()
+  })
 })
 
 describe('nowPlaying / onNowPlaying', () => {
@@ -274,5 +281,27 @@ describe('currentIndex', () => {
     expect(currentIndex(['a', 'b', 'a', 'c', 'a'], 'a', 3)).toBe(2)
     expect(currentIndex(['a', 'b', 'a', 'c', 'a'], 'a', 4)).toBe(4)
     expect(currentIndex(['a', 'b', 'a'], 'a', 0)).toBe(0)
+  })
+})
+
+describe('preciseTime', () => {
+  const withAudio = (audio: { currentTime: number } | null, fn: () => void): void => {
+    const g = globalThis as { document?: unknown }
+    const saved = g.document
+    g.document = { getElementById: (id: string) => (id === 'apple-music-player' ? audio : null) }
+    try {
+      fn()
+    } finally {
+      g.document = saved
+    }
+  }
+
+  test("the audio element's time while it agrees with MusicKit", () => {
+    withAudio({ currentTime: 41.637 }, () => expect(preciseTime(fakeMk(2).mk)).toBe(41.637))
+  })
+  test("MusicKit's (rounded) time without the element, or when it's off (song change)", () => {
+    withAudio(null, () => expect(preciseTime(fakeMk(2).mk)).toBe(42))
+    withAudio({ currentTime: 3.2 }, () => expect(preciseTime(fakeMk(2).mk)).toBe(42))
+    withAudio({ currentTime: NaN }, () => expect(preciseTime(fakeMk(2).mk)).toBe(42))
   })
 })

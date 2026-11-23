@@ -7,6 +7,7 @@ export const TABS: readonly Tab[] = ['playing', 'library', 'discover']
 
 export type Screen =
   | { name: 'playing' }
+  | { name: 'lyrics' }
   | { name: 'library' }
   | { name: 'playlist'; playlist: Playlist }
   | { name: 'discover' }

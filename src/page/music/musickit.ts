@@ -48,6 +48,8 @@ export interface ApiArtwork {
 /** a queue item (song) */
 export interface MediaItem {
   readonly id: string
+  /** e.g. `song` (queue items), `songs` / `library-songs` (API resources) */
+  readonly type?: string
   readonly attributes?: {
     readonly name?: string
     readonly artistName?: string

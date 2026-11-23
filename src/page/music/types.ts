@@ -28,7 +28,7 @@ export interface NowPlaying {
   /** artwork palette as `#rrggbb` (background first, then its text colours) when the item carries
    * one: catalog songs do, library songs don't. See `ArtworkColors`. */
   colors?: ArtworkColors
-  /** catalog id, to look up `colors` for library songs */
+  /** catalog song id (undefined for uploads): `colors` for library songs, lyrics */
   catalogId?: string
 }
 

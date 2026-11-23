@@ -24,6 +24,20 @@ export function playbackInfo(mk: MusicKitInstance): PlaybackInfo {
   }
 }
 
+/** id of the page's `<audio>` MusicKit plays through */
+const AUDIO_ID = 'apple-music-player'
+
+/**
+ * The playhead in seconds, to the millisecond (for animating lyrics). MusicKit's own
+ * `currentPlaybackTime` is rounded to whole seconds; its audio element isn't.
+ */
+export function preciseTime(mk: MusicKitInstance): number {
+  const audio = document.getElementById(AUDIO_ID) as HTMLMediaElement | null
+  const t = audio?.currentTime ?? NaN
+  // the element can lag a song change; trust it only while it agrees with MusicKit
+  return Number.isFinite(t) && Math.abs(t - mk.currentPlaybackTime) <= 1 ? t : mk.currentPlaybackTime
+}
+
 /** Replaces the queue with one catalog song and starts it. */
 export async function playSong(mk: MusicKitInstance, songId: string): Promise<void> {
   await mk.setQueue({ song: songId, startPlaying: true })
@@ -76,6 +90,9 @@ export function toArtworkColors(artwork: ApiArtwork | undefined): ArtworkColors 
   return { bg, text }
 }
 
+/** a catalog song (not a library entry, upload or video): its id is the catalog song id */
+const isCatalogSong = (item: MediaItem): boolean => (item.type === 'song' || item.type === 'songs') && /^\d+$/.test(item.id)
+
 export function toNowPlaying(item: MediaItem): NowPlaying {
   const a = item.attributes
   return {
@@ -85,7 +102,8 @@ export function toNowPlaying(item: MediaItem): NowPlaying {
     artwork: a?.artwork?.url,
     durationMs: a?.durationInMillis ?? 0,
     colors: toArtworkColors(a?.artwork),
-    catalogId: a?.playParams?.catalogId
+    // library songs point at their catalog song; a catalog song's own id is numeric
+    catalogId: a?.playParams?.catalogId ?? (isCatalogSong(item) ? item.id : undefined)
   }
 }
 

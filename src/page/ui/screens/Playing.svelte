@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { lyrics } from '../../state/lyrics.svelte'
   import { nav } from '../../state/nav.svelte'
   import { player } from '../../state/player.svelte'
   import Artwork from '../components/Artwork.svelte'
@@ -18,9 +19,24 @@
       <Artwork src={song.artwork} size={ART_SIZE} radius="var(--radius-art)" fluid />
     </div>
     <div class="bottom">
-      <div class="info">
-        <h1 title={song.title}>{song.title}</h1>
-        <p title={song.artist}>{song.artist}</p>
+      <div class="head">
+        <div class="info">
+          <h1 title={song.title}>{song.title}</h1>
+          <p title={song.artist}>{song.artist}</p>
+        </div>
+        <!-- dimmed once we know the song has none (still tappable: the screen says so) -->
+        <button
+          class="lyrics"
+          class:none={lyrics.status === 'none'}
+          aria-label="Lyrics"
+          title="Lyrics"
+          onclick={() => nav.open({ name: 'lyrics' })}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-7l-4.5 3.5V17H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
+            <path d="M8 9h8M8 12.5h5" />
+          </svg>
+        </button>
       </div>
       <ProgressBar
         time={player.time}
@@ -74,8 +90,45 @@
     flex-direction: column;
     gap: var(--space-4);
   }
+  .head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
   .info {
+    flex: 1;
     min-width: 0;
+  }
+  .lyrics {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: var(--size-play);
+    height: var(--size-play);
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--bg-grouped);
+    color: var(--text);
+    cursor: pointer;
+    transition:
+      transform 0.15s ease,
+      opacity 0.15s ease;
+  }
+  .lyrics:active {
+    transform: scale(0.88);
+  }
+  .lyrics.none {
+    opacity: 0.4;
+  }
+  .lyrics svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
   h1,
   .info p {

@@ -25,6 +25,17 @@
   /* playing screen: how much of the cover's colour goes into the bg under the artwork scene */
   --ambient-base-mix: 30%;
 
+  /* lyrics (apple's lyrics view: white on the artwork colour) */
+  --lyric: #ffffff;
+  --lyric-dim: rgba(255, 255, 255, 0.18);
+  --lyric-unsung: rgba(255, 255, 255, 0.35);
+  --text-lyric: 22px;
+  --text-lyric-background: 14px;
+  --weight-lyric: 700;
+  --tracking-lyric: -0.4px;
+  --space-lyric: 20px;
+  --size-lyric-dot: 7px;
+
   --font: Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --text-title: 22px;
   --text-name: 18px;

@@ -3,11 +3,13 @@
   import type { Screen } from '../state/navStack'
   import { auth } from '../state/auth.svelte'
   import { library } from '../state/library.svelte'
+  import { lyrics } from '../state/lyrics.svelte'
   import { nav } from '../state/nav.svelte'
   import { player } from '../state/player.svelte'
   import TabBar from './components/TabBar.svelte'
   import Discover from './screens/Discover.svelte'
   import Library from './screens/Library.svelte'
+  import Lyrics from './screens/Lyrics.svelte'
   import Playing from './screens/Playing.svelte'
   import Playlist from './screens/Playlist.svelte'
   import SignIn from './screens/SignIn.svelte'
@@ -19,18 +21,26 @@
     if (auth.status === 'signed-in') return player.start()
   })
 
+  // the current song's lyrics load as soon as it comes up (the lyrics button knows if there are any)
+  $effect(() => {
+    if (auth.status === 'signed-in') lyrics.load(player.current)
+  })
+
   // signing out (or in as someone else) starts fresh
   $effect(() => {
     if (auth.status === 'signed-out') {
       library.reset()
+      lyrics.reset()
       nav.reset()
       player.error = undefined
     }
   })
 
   const screen = $derived(nav.screen)
-  /** the playing screen sits on its artwork (behind the tabs too) */
-  const playing = $derived(screen.name === 'playing')
+  /** the playing and lyrics screens sit on the artwork (behind the tabs too) */
+  const playing = $derived(screen.name === 'playing' || screen.name === 'lyrics')
+  /** lyrics take the whole screen: no tab bar */
+  const tabs = $derived(screen.name !== 'lyrics')
   /** the cover's background colour: wash under the artwork scene, cover glow */
   const tint = $derived(playing ? player.colors?.bg : undefined)
   let scroller = $state<HTMLElement>()
@@ -52,10 +62,12 @@
     {#if playing && player.current?.artwork}<ArtworkScene artwork={player.current.artwork} />{/if}
     {#if auth.status === 'signed-in'}
       <div class="shell">
-        <header><TabBar /></header>
-        <main bind:this={scroller} onscroll={() => scroller && scrollTops.set(screen, scroller.scrollTop)}>
+        {#if tabs}<header><TabBar /></header>{/if}
+        <main class:full={!tabs} bind:this={scroller} onscroll={() => scroller && scrollTops.set(screen, scroller.scrollTop)}>
           {#if screen.name === 'playing'}
             <Playing />
+          {:else if screen.name === 'lyrics'}
+            <Lyrics />
           {:else if screen.name === 'library'}
             <Library />
           {:else if screen.name === 'playlist'}
@@ -125,5 +137,9 @@
     overflow-y: auto;
     padding: var(--space-1) var(--space-4) var(--space-3);
     scrollbar-width: none;
+  }
+  /* no tab bar above: room at the top instead */
+  main.full {
+    padding-top: var(--space-3);
   }
 </style>

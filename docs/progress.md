@@ -43,7 +43,7 @@ each step = one session. "done when" = what the user checks before merging.
   - active song highlighted in playlist detail
   - done when: controls work, progress moves, highlight follows the current song
 
-- [ ] **5. lyrics** (apple's lyrics view, docs/lyrics.md)
+- [x] **5. lyrics** (apple's lyrics view, docs/lyrics.md)
   - `music/lyrics.ts`: `syllable-lyrics` TTML -> lines + timed words, instrumental gaps (+ tests)
   - lyrics screen from Playing's lyrics button (no tab bar), over the same `ArtworkScene`
   - apple's look: bold left-aligned lines, word-by-word gradient fill + lift, emphasis glow on held
@@ -88,3 +88,6 @@ Gotchas: `mk.api.music` resolves (doesn't throw) on non-2xx -> check `res.status
 
 **4:** `music/player.ts` gains now-playing (`queue.currentItem`, set before playback too), skip/seek (previous restarts past 3s), `currentIndex` -> `state/player.svelte.ts` (`current`, `position`, `playlistId`, `colors`). Playing screen + `ProgressBar` (range input) + `Transport`; `ArtworkScene` (`ui/artworkScene.ts`, docs/ambient.md) draws the cover rotating and blurred on a 1/4-res canvas at 15fps over a wash of its bg colour, translucent tabs on top; cover shrinks when paused. App went dark only (one token set). Playlist highlight only while the queue is that playlist, nearest copy to the queue position; tapping it toggles.
 Gotchas: the wash is the `.screen` background itself (a tinted child left a light seam at the rounded corners). Library songs have no artwork `bgColor` -> looked up via `/v1/catalog/{sf}/songs/{playParams.catalogId}` (cached; failures retried, 404 = none). A seek to an unbuffered spot takes seconds, and MusicKit keeps playing the old position meanwhile, so `seek` pauses, seeks, then resumes; the store holds the bar and button on the target until it lands. Next: step 5.
+
+**5:** `music/lyrics.ts` (own tiny XML reader -> lines of timed syllables, bg vocals, duet agents, instrumental gaps, `currentLine`/`activeLines`) -> `state/lyrics.svelte.ts` (fetched per song, cached; dims Playing's lyrics button when none) -> `screens/Lyrics.svelte` + `components/LyricsView.svelte` (one rAF loop writes `--fill`/`--y` on the active lines only; motion maths in `ui/lyricsMotion.ts`). Apple's values scaled to our window (22px type, current line 36px from the top).
+Gotchas: `currentPlaybackTime` is whole seconds -> `preciseTime` reads `audio#apple-music-player`. After a song change MusicKit reports the old song's time for a moment -> the player store ignores times > 2s for 2s (else the lyrics/bar flash). Catalog queue items have no `playParams.catalogId` (their id is it). Hover highlight only in user-scroll mode. Next: step 6.
