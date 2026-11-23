@@ -1,0 +1,69 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: patch, minor, major or x.y.z
+        required: true
+        default: patch
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.13
+
+      - run: bun install --frozen-lockfile
+
+      - name: next version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: echo "version=$(bun scripts/version.ts "$BUMP" --write)" >> "$GITHUB_OUTPUT"
+
+      - run: bun run check
+
+      # check already ran electron-vite build
+      - run: bunx electron-builder --linux
+
+      - name: sha256
+        working-directory: release
+        run: sha256sum pod-x86_64.AppImage > pod-x86_64.AppImage.sha256
+
+      - name: commit, tag, push
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "release v$VERSION"
+          git tag "v$VERSION"
+          # atomic: if main moved meanwhile, neither the commit nor the tag lands
+          git push --atomic origin HEAD:main "v$VERSION"
+
+      - name: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        # the tag is pushed by now, so a flaky API call must not burn the version: retry
+        run: |
+          for attempt in 1 2 3; do
+            gh release view "v$VERSION" >/dev/null 2>&1 && gh release delete "v$VERSION" --yes
+            gh release create "v$VERSION" --title "v$VERSION" --generate-notes \
+              release/pod-x86_64.AppImage release/pod-x86_64.AppImage.sha256 && exit 0
+            sleep 15
+          done
+          exit 1

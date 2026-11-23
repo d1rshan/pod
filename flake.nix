@@ -13,6 +13,7 @@
         glib nss nspr atk at-spi2-atk at-spi2-core cups dbus cairo gtk3 pango
         expat alsa-lib libdrm libgbm libGL libxkbcommon systemd
         libx11 libxcomposite libxdamage libxext libxfixes libxrandr libxcb
+        stdenv.cc.cc.lib zlib # for electron-builder's bundled 7za + mksquashfs (bun run dist)
       ];
     in {
       devShells.${system}.default = pkgs.mkShell {

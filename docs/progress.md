@@ -66,7 +66,7 @@ each step = one session. "done when" = what the user checks before merging.
   - out of scope: replacing music.apple.com with a bare MusicKit page (architecture change, ask first)
   - done when: bench shows a clear drop and everything still works
 
-- [ ] **8. package + release**
+- [x] **8. package + release**
   - repo `d1rshan/pod` is already public; LICENSE: GPLv3 (same as d1rshan/tsuki), `license` in
     package.json
   - icon: 3-5 variants on the doop canvas (GPK_jqny4n): modern, minimal, our own music note on an
@@ -124,3 +124,6 @@ Gotcha: Apple's page shortcuts saw our keys retargeted to the shadow host and at
 
 **7:** Apple's hidden home page was the cost (13 MSE motion videos, ~90 images, 4.8k nodes, growing over time). Main now loads `/{sf}/pod` (`shared/parked.ts`, a 404 that still boots Apple's shell + MusicKit); bench idle 549->360, playing 660->481, lyrics 808->498 MB (renderer 306->123). Storefront saved in `userData/storefront`; `auth.svelte.ts` re-parks (`location.replace`, max 3 per tab session) when the account's differs.
 Gotchas: MusicKit takes `storefrontId` from the URL, and a storefront that isn't the account's = `previewOnly` (stops at 90s). Tried, no gain over noise: audio service in-process (~7MB), V8 semi-space / optimize-for-size; network service in-process broke loading. Left: main ~115, CDM ~100, GPU ~70 (Chromium/Apple shell baseline). Apple logs its own 404 twice (expected). How it was found: CDP `Tracing` with `disabled-by-default-memory-infra` + `requestMemoryDump` (per-process allocator breakdown: media/cc image memory pointed at Apple's videos/images). Next: step 8.
+
+**8:** Icon = canvas frame "Icon A2" (own round-head note on an ambient blur in Apple Music reds); source `build/icon.html`, rendered with headless Chrome to `build/icon.png` (1024) + `build/icons/` (512, 1024); window + sign-in popup use it. AppImage via electron-builder (`pod-x86_64.AppImage`), GPLv3. `scripts/version.ts` (next version, + tests) is shared by `.github/workflows/release.yml` and `bun run release` (`scripts/release.ts`).
+Gotchas: castLabs mirror must end in `/download/` (electron-builder adds `v<version>`). On NixOS, `dist` needs `stdenv.cc.cc.lib` + `zlib` in the dev shell (bundled 7za/mksquashfs), and the AppImage runs via `appimage-run` (agent shell: `--no-sandbox --no-zygote`). The bot pushes commit + tag atomically; publish retries. Next: TBD.

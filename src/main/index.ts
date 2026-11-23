@@ -20,6 +20,8 @@ const RETRY_LOAD_MS = 5000
 const ERR_ABORTED = -3
 const WIDEVINE_WAIT_MS = 10_000
 const dev = !app.isPackaged
+/** the app icon (build/icon.png), packaged as an extra resource */
+const ICON = dev ? join(__dirname, '../../build/icon.png') : join(process.resourcesPath, 'icon.png')
 
 // Dev only: expose Chrome DevTools Protocol on localhost so agents can attach
 // with `playwright-cli attach --cdp=http://127.0.0.1:9222` to inspect the running app.
@@ -69,6 +71,7 @@ function createWindow(): BrowserWindow {
     resizable: false,
     alwaysOnTop: true,
     show: false,
+    icon: ICON,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -117,6 +120,7 @@ function createWindow(): BrowserWindow {
       action: 'allow',
       overrideBrowserWindowOptions: {
         parent: win,
+        icon: ICON,
         alwaysOnTop: true,
         autoHideMenuBar: true,
         center: true
