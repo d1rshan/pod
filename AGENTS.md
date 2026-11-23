@@ -13,10 +13,12 @@ bun test                        # unit tests (*.test.ts next to the code)
 ## inspecting the running app
 
 - `playwright-cli` (installed globally) attaches to the dev app's CDP port `127.0.0.1:9222`
-- agents can't launch Electron from their shell (zygote/GPU crash) - ask the user to run `bun dev`, then attach
-- the running app has the user's signed-in session - never ask for Apple credentials
+- the app uses the user's signed-in session - never ask for Apple credentials
 
 ```sh
+# start it yourself if it isn't running (the agent shell needs these flags), in the background
+nix develop --command bunx electron-vite dev --noSandbox -- --disable-gpu --no-zygote
+
 export PLAYWRIGHT_CLI_SESSION=pod
 playwright-cli attach --cdp=http://127.0.0.1:9222        # once; re-attach if the app restarts
 playwright-cli snapshot                                   # page tree with refs (e3, ...)

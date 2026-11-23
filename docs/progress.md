@@ -68,7 +68,7 @@ each step = one session. "done when" = what the user checks before merging.
 <!-- per step: what was done, gotchas, what's next (2-3 lines) -->
 
 **-1:** AGENTS.md, dev CDP port 9222, playwright-cli for inspecting the app, `bun test`, `bun run check`.
-Gotcha: agents can't launch Electron from their shell (zygote/GPU crash) - user runs `bun dev`, agent attaches. Next: step 0.
+Next: step 0.
 
 **0:** main loads music.apple.com, injects `out/page/index.js` via `executeJavaScript` on dom-ready (window shown after), Apple's `body > *` hidden, Svelte in a shadow root. Page bundle is an IIFE built by a plugin in main's vite config (watched in dev, re-injected in place without reload). UA stripped of Electron/pod.
 Gotcha: Apple's CSP allows inline styles + no Trusted Types, so Svelte `css: 'injected'` works in the shadow root. MusicKit is on `window` (main world). Next: step 1.
