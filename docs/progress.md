@@ -94,6 +94,28 @@ each step = one session. "done when" = what the user checks before merging.
   - done when: v0.1.0 is published from CI; the AppImage from the README button runs outside the
     dev shell, signs in, plays full songs and shows the picked icon
 
+- [ ] **9. macOS + Windows builds**
+  - castLabs Electron already ships macOS + Windows builds with Widevine; little app code is Linux-only
+  - VMP signing (castLabs EVS, `castlabs-evs` in CI): Widevine on macOS/Windows likely refuses licenses
+    for unsigned apps. The account exists; repo secrets `EVS_ACCOUNT_NAME` + `EVS_PASSWD` are set (the
+    env vars castlabs-evs reads, so no login prompt in CI)
+  - no macOS/Windows machine here: add a build-only mode to `release.yml` first (`workflow_dispatch`
+    input, builds + signs + uploads Actions artifacts, no version bump, tag or release) and iterate with
+    it; the user tests those artifacts on friends' PCs before any real `bun run release`
+  - no OS code signing for now (no Apple Developer account / Windows cert): README explains the macOS
+    Gatekeeper workaround (right-click -> Open, or `xattr -dr com.apple.quarantine`) and Windows
+    SmartScreen (More info -> Run anyway)
+  - electron-builder: macOS `pod-arm64.dmg` + `pod-x64.dmg`, Windows `pod-x64.exe` (NSIS), icons for both
+  - `release.yml` in stages: version (ubuntu) -> build matrix (ubuntu, macos, windows; each runs `bun run
+    check`, builds, VMP-signs, uploads an artifact) -> publish (ubuntu, only if all builds pass: sha256s,
+    atomic commit + tag push, one release with every file). `bun run release` unchanged
+  - app checks per OS: frameless transparent always-on-top window + rounded bezel, sign-in popup, macOS
+    dock icon / menu / quit on close
+  - README: one download button per OS (stable `releases/latest/download/...` names), install + update +
+    troubleshooting per OS; spec.md stack/platforms + release section (build-only, new files) updated
+  - done when: one `bun run release` publishes AppImage + dmgs + exe; on a friend's Mac and Windows PC
+    the downloaded build installs, signs in, plays full songs and shows the icon
+
 ## handoff notes
 
 <!-- per step: what was done, gotchas, what's next (2-3 lines) -->

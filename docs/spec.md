@@ -10,8 +10,7 @@ what is pod?
 - castLabs Electron (Widevine for playback) loading `music.apple.com`, using its MusicKit - no Apple developer account
 - Svelte + TypeScript, bun
 - Linux first for now
-- shipped as an AppImage on GitHub Releases, built + published by a GitHub Actions workflow that
-  `bun run release <bump>` triggers (no drafts, no auto-update); GPLv3
+- shipped as an AppImage on GitHub Releases (see release); GPLv3
 - ~200MB RAM budget
 
 ## architecture
@@ -24,6 +23,13 @@ what is pod?
   account's (else MusicKit plays previews only); main remembers it, the page re-parks on a mismatch
 - talk only to the MusicKit API
 - sign in once via Apple's login popup, session persisted
+
+## release
+
+- `bun run release <bump>` triggers a GitHub Actions workflow: check, build, then the bot commits the
+  version bump, tags and publishes the release (`git pull` afterwards)
+- stable file names, so the README button (`releases/latest/download/...`) always gets the newest
+- no auto-update: updating = replace the file
 
 ## code structure
 
