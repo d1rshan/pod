@@ -92,7 +92,7 @@ function createWindow(): BrowserWindow {
   })
 
   // Offline at launch (or any failed load): show the window anyway and keep retrying.
-  // TODO(step 8): an offline state in our UI instead of Apple's/Chromium's error page.
+  // TODO: an offline state in our UI instead of Apple's/Chromium's error page.
   let retry: NodeJS.Timeout | undefined
   /** Apple's page parks on a not-found route: MusicKit loads, no catalog page does (shared/parked.ts) */
   const load = (url = `${APPLE_MUSIC_ORIGIN}${parkedPath(savedStorefront())}`): void => {

@@ -10,6 +10,8 @@ what is pod?
 - castLabs Electron (Widevine for playback) loading `music.apple.com`, using its MusicKit - no Apple developer account
 - Svelte + TypeScript, bun
 - Linux first for now
+- shipped as an AppImage on GitHub Releases, built + published by a GitHub Actions workflow that
+  `bun run release <bump>` triggers (no drafts, no auto-update); GPLv3
 - ~200MB RAM budget
 
 ## architecture

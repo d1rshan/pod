@@ -66,14 +66,33 @@ each step = one session. "done when" = what the user checks before merging.
   - out of scope: replacing music.apple.com with a bare MusicKit page (architecture change, ask first)
   - done when: bench shows a clear drop and everything still works
 
-- [ ] **8. polish**
-  - window drag + close
-  - media keys / MPRIS work
-  - done when: feels finished in daily use
-
-- [ ] **9. package**
-  - electron-builder AppImage
-  - done when: AppImage runs outside the dev shell and plays music
+- [ ] **8. package + release**
+  - repo `d1rshan/pod` is already public; LICENSE: GPLv3 (same as d1rshan/tsuki), `license` in
+    package.json
+  - icon: 3-5 variants on the doop canvas (GPK_jqny4n): modern, minimal, our own music note on an
+    ambient gradient like Playing's blurred cover glow (not Apple's icon: trademark) -> user picks
+    one -> exported to `build/icon.png` (512 + 1024), used by the AppImage and the window
+  - electron-builder: AppImage only (x86_64), `electronVersion` set explicitly (castLabs git dep),
+    icon, `artifactName: pod-${arch}.${ext}` (stable name, so
+    `releases/latest/download/pod-x86_64.AppImage` always gets the newest)
+  - `.github/workflows/release.yml`: `workflow_dispatch` only, input `bump` = patch|minor|major|x.y.z;
+    on ubuntu: install, next version (pure fn + tests, fails if the tag exists), `bun run check`,
+    `bun run dist`, sha256 -> only then the bot (`github-actions[bot]`) commits `release vX.Y.Z` to
+    main, tags `vX.Y.Z`, pushes, and publishes the GitHub release right away (no draft) with the
+    AppImage + sha256 + generated notes; `concurrency` 1, `permissions: contents: write`
+  - `scripts/release.ts`: `bun run release patch|minor|major|x.y.z`: checks on main, clean, pushed,
+    `gh` signed in -> triggers the workflow (`gh workflow run`), watches it (`gh run watch`), prints
+    the release URL, reminds to `git pull` (the bump commit is the bot's)
+  - no update notice / self-update: updating = download the new AppImage, replace the file
+    (sign-in lives in `~/.config/pod`, kept)
+  - README: what pod is (needs an Apple Music subscription), a download badge (shields.io, shows
+    the latest version) linking straight to `releases/latest/download/pod-x86_64.AppImage`, then
+    install (`chmod +x`, run, sign in), update (replace the file), troubleshooting (libfuse2 on
+    Ubuntu 22.04+, `--no-sandbox` on Ubuntu 24.04, `appimage-run` on NixOS), "not affiliated with
+    Apple"
+  - first release: 0.1.0 (`bun run release minor` from 0.0.1)
+  - done when: v0.1.0 is published from CI; the AppImage from the README button runs outside the
+    dev shell, signs in, plays full songs and shows the picked icon
 
 ## handoff notes
 
