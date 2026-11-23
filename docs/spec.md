@@ -9,8 +9,9 @@ what is pod?
 
 - castLabs Electron (Widevine for playback) loading `music.apple.com`, using its MusicKit - no Apple developer account
 - Svelte + TypeScript, bun
-- Linux first for now
-- shipped as an AppImage on GitHub Releases (see release); GPLv3
+- Linux, macOS, Windows
+- shipped on GitHub Releases (see release): Linux AppImage (x86_64), macOS dmg (arm64 + x64),
+  Windows NSIS installer (x64); GPLv3
 - ~200MB RAM budget
 
 ## architecture
@@ -28,8 +29,19 @@ what is pod?
 
 - `bun run release <bump>` triggers a GitHub Actions workflow: check, build, then the bot commits the
   version bump, tags and publishes the release (`git pull` afterwards)
-- stable file names, so the README button (`releases/latest/download/...`) always gets the newest
-- no auto-update: updating = replace the file
+- the workflow: version (fails early on a bad bump / existing tag) -> build matrix (ubuntu, macos,
+  windows: `bun run check`, electron-builder) -> publish (only if every build passed: sha256s,
+  atomic commit + tag push, one release with every file)
+- `bun run release build` (`build_only` workflow input): same builds as Actions artifacts, no bump/tag/release (for testing
+  on machines we don't have)
+- macOS/Windows builds are castLabs VMP-signed (Widevine refuses licences otherwise) via `castlabs-evs`
+  in CI (secrets `EVS_ACCOUNT_NAME` + `EVS_PASSWD`), from electron-builder hooks (`scripts/vmp`):
+  macOS before code signing (`afterPack`), Windows after (`afterSign`)
+- no OS code signing (macOS ad-hoc only, so Apple silicon runs it); README covers Gatekeeper and
+  SmartScreen
+- stable file names (`pod-x86_64.AppImage`, `pod-arm64.dmg`, `pod-x64.dmg`, `pod-x64.exe`), so the
+  README buttons (`releases/latest/download/...`) always get the newest
+- no auto-update: updating = replace the file / rerun the installer
 
 ## code structure
 

@@ -1,5 +1,11 @@
 name: release
 
+# `bun run release <bump>`: version -> build on linux/macos/windows -> publish (commit, tag, release).
+# build_only: same builds (VMP-signed), uploaded as Actions artifacts; no bump, tag or release.
+#   bun run release build
+# run-name is how `bun run release` finds its run (scripts/release.ts runTitle)
+run-name: ${{ inputs.build_only && 'build only' || format('release {0}', inputs.bump) }}
+
 on:
   workflow_dispatch:
     inputs:
@@ -7,18 +13,61 @@ on:
         description: patch, minor, major or x.y.z
         required: true
         default: patch
+      build_only:
+        description: only build + upload artifacts (no version bump, tag or release)
+        type: boolean
+        default: false
 
 permissions:
   contents: write
 
 concurrency:
-  group: release
+  group: ${{ inputs.build_only && 'build' || 'release' }}
   cancel-in-progress: false
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
-  release:
-    if: github.ref == 'refs/heads/main'
+  version:
+    if: inputs.build_only || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.13
+
+      # fails here (before any build) if the bump is bad or its tag exists
+      - name: next version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+          BUILD_ONLY: ${{ inputs.build_only }}
+        run: |
+          if [ "$BUILD_ONLY" = true ]; then
+            version=$(jq -r .version package.json)
+          else
+            version=$(bun scripts/version.ts "$BUMP")
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: version
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: --linux
+          - os: macos-latest
+            target: --mac
+          - os: windows-latest
+            target: --win
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -28,25 +77,70 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
-      - name: next version
-        id: version
+      - name: set version
+        if: ${{ !inputs.build_only }}
         env:
-          BUMP: ${{ inputs.bump }}
-        run: echo "version=$(bun scripts/version.ts "$BUMP" --write)" >> "$GITHUB_OUTPUT"
+          VERSION: ${{ needs.version.outputs.version }}
+        run: bun scripts/version.ts "$VERSION" --write
 
       - run: bun run check
 
+      # castLabs VMP signing (scripts/vmp): Widevine on macOS/Windows needs it, Linux doesn't
+      - uses: actions/setup-python@v5
+        if: runner.os != 'Linux'
+        with:
+          python-version: '3.12'
+
+      - name: castlabs evs sign-in
+        if: runner.os != 'Linux'
+        env:
+          EVS_ACCOUNT_NAME: ${{ secrets.EVS_ACCOUNT_NAME }}
+          EVS_PASSWD: ${{ secrets.EVS_PASSWD }}
+        run: |
+          python -m pip install castlabs-evs==1.3.3
+          python -m castlabs_evs.account --no-ask refresh -A "$EVS_ACCOUNT_NAME" -P "$EVS_PASSWD"
+
       # check already ran electron-vite build
-      - run: bunx electron-builder --linux
+      - run: bunx electron-builder ${{ matrix.target }}
+        env:
+          PYTHON: python
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pod-${{ runner.os }}
+          path: |
+            release/pod-*.AppImage
+            release/pod-*.dmg
+            release/pod-*.exe
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: [version, build]
+    if: ${{ !inputs.build_only }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.13
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: pod-*
+          path: dist
+          merge-multiple: true
 
       - name: sha256
-        working-directory: release
-        run: sha256sum pod-x86_64.AppImage > pod-x86_64.AppImage.sha256
+        working-directory: dist
+        run: for f in *; do sha256sum "$f" > "$f.sha256"; done
 
       - name: commit, tag, push
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.version.outputs.version }}
         run: |
+          bun scripts/version.ts "$VERSION" --write
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -am "release v$VERSION"
@@ -57,13 +151,12 @@ jobs:
       - name: publish
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.version.outputs.version }}
         # the tag is pushed by now, so a flaky API call must not burn the version: retry
         run: |
           for attempt in 1 2 3; do
             gh release view "v$VERSION" >/dev/null 2>&1 && gh release delete "v$VERSION" --yes
-            gh release create "v$VERSION" --title "v$VERSION" --generate-notes \
-              release/pod-x86_64.AppImage release/pod-x86_64.AppImage.sha256 && exit 0
+            gh release create "v$VERSION" --title "v$VERSION" --generate-notes dist/* && exit 0
             sleep 15
           done
           exit 1

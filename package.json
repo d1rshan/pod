@@ -15,7 +15,7 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "svelte-check --tsconfig ./tsconfig.web.json",
     "typecheck": "bun run typecheck:node && bun run typecheck:web",
-    "dist": "electron-vite build && electron-builder --linux",
+    "dist": "electron-vite build && electron-builder",
     "test": "bun test",
     "bench": "bun scripts/bench.ts",
     "check": "bun run typecheck && bun test && bun run build",
@@ -61,6 +61,39 @@
       "synopsis": "A tiny iPod-style Apple Music player",
       "syncDesktopName": true
     },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "category": "public.app-category.music",
+      "icon": "build/icon.png",
+      "identity": "-",
+      "hardenedRuntime": false
+    },
+    "dmg": {
+      "title": "pod"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false
+    },
     "electronVersion": "45.2.1+wvcus",
     "artifactName": "pod-${arch}.${ext}",
     "compression": "maximum",
@@ -70,6 +103,8 @@
         "to": "icon.png"
       }
     ],
-    "publish": null
+    "publish": null,
+    "afterPack": "scripts/vmp/afterPack.cjs",
+    "afterSign": "scripts/vmp/afterSign.cjs"
   }
 }

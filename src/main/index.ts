@@ -1,4 +1,4 @@
-import { app, BrowserWindow, components } from 'electron'
+import { app, BrowserWindow, components, Menu } from 'electron'
 import { readFile, writeFile } from 'node:fs/promises'
 import { readFileSync, watch } from 'node:fs'
 import { join } from 'node:path'
@@ -22,6 +22,9 @@ const WIDEVINE_WAIT_MS = 10_000
 const dev = !app.isPackaged
 /** the app icon (build/icon.png), packaged as an extra resource */
 const ICON = dev ? join(__dirname, '../../build/icon.png') : join(process.resourcesPath, 'icon.png')
+
+// Windows: taskbar grouping + pinned icon match the installer's shortcut (electron-builder appId)
+if (process.platform === 'win32') app.setAppUserModelId('dev.pod.app')
 
 // Dev only: expose Chrome DevTools Protocol on localhost so agents can attach
 // with `playwright-cli attach --cdp=http://127.0.0.1:9222` to inspect the running app.
@@ -236,13 +239,15 @@ app.whenReady().then(async () => {
   // popup renders blank). App-wide, because window.open children ignore session.setUserAgent.
   app.userAgentFallback = app.userAgentFallback.replace(/ (Electron|pod)\/\S+/g, '')
 
+  if (process.platform === 'darwin') {
+    // Edit keeps cmd+c/v/a working in the search field and Apple's sign-in popup; no View menu (reload, devtools)
+    Menu.setApplicationMenu(Menu.buildFromTemplate([{ role: 'appMenu' }, { role: 'editMenu' }, { role: 'windowMenu' }]))
+    // packaged builds take the dock icon from the .app (build/icon.png -> icns)
+    if (dev) app.dock?.setIcon(ICON)
+  }
+
   createWindow()
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
 })
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit()
-})
+// one window: closing it quits, on macOS too (no dock-only state to come back to)
+app.on('window-all-closed', () => app.quit())
