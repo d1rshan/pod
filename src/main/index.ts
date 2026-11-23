@@ -31,7 +31,8 @@ if (dev) {
 /** Runs the page bundle in music.apple.com's main world (so it can reach `window.MusicKit`). */
 async function injectPage(win: BrowserWindow): Promise<void> {
   const code = await readFile(PAGE_BUNDLE, 'utf8')
-  await win.webContents.executeJavaScript(code)
+  // unpackaged builds expose our stores to scripts driving the app (`bun run bench`)
+  await win.webContents.executeJavaScript(dev ? `window.__podDebug = true;\n${code}` : code)
 }
 
 function createWindow(): BrowserWindow {

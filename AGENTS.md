@@ -8,6 +8,7 @@
 nix develop --command bun dev   # run the app (always inside the dev shell)
 bun run check                   # typecheck + tests + build
 bun test                        # unit tests (*.test.ts next to the code)
+nix develop --command bun run bench   # memory benchmark (~3 min, plays audio, close pod first)
 ```
 
 ## inspecting the running app
@@ -43,6 +44,7 @@ update `docs/spec.md` only when a product/architecture decision changes
 - `bun run check` passes
 - unit tests for pure logic (mappers, nav stack, formatting)
 - after UI changes: snapshot/screenshot; check `console error`; `eval` for MusicKit state
+- changes that can affect memory: `bun run bench` before/after, show the comparison (appends to `bench/results.jsonl`, tracked, never committed by the script; <10MB = noise)
 - tell the user what you couldn't verify (audio, feel)
 
 ## conventions

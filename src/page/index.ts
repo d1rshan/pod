@@ -1,6 +1,10 @@
 // Entry of the bundle main injects into music.apple.com (main world, after dom-ready).
 // Re-running it (dev reload) tears down the previous instance first.
 import { mount, unmount } from 'svelte'
+import { library } from './state/library.svelte'
+import { lyrics } from './state/lyrics.svelte'
+import { nav } from './state/nav.svelte'
+import { player } from './state/player.svelte'
 import App from './ui/App.svelte'
 import tokens from './ui/styles/tokens.css?inline'
 // Inter variable (latin, OFL): Apple's CSP allows fonts only from apple.com or data:, so it's inlined
@@ -58,7 +62,7 @@ function inject(): void {
     fontStyle.remove()
     if (window.__pod?.destroy === destroy) delete window.__pod
   }
-  window.__pod = { destroy }
+  window.__pod = { destroy, debug: window.__podDebug ? { nav, player, library, lyrics } : undefined }
 
   try {
     document.head.append(fontStyle)
