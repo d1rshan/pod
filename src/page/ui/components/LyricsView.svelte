@@ -331,6 +331,8 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     transform: translateY(var(--y, 0));
+    /* own layer while active: the 2px lift glides in sub-pixel steps instead of snapping to whole pixels */
+    will-change: transform;
   }
   .current.timed .letter {
     transform: translateY(var(--y, 0)) scale(var(--scale, 1));
