@@ -57,13 +57,21 @@ each step = one session. "done when" = what the user checks before merging.
   - tap a result -> plays
   - done when: search a song, tap, it plays
 
-- [ ] **7. polish**
+- [ ] **7. ram reduction**
+  - cut memory as far as it goes without breaking sign-in, playback or the look; find where it goes
+    and pick the approach yourself
+  - confirm what you keep with `bun run bench` (~3 min, so only once an idea is worth confirming, not
+    after every edit); keep only what beats the noise (~10MB)
+  - known (bench baseline in `bench/results.jsonl`)
+  - out of scope: replacing music.apple.com with a bare MusicKit page (architecture change, ask first)
+  - done when: bench shows a clear drop and everything still works
+
+- [ ] **8. polish**
   - window drag + close
   - media keys / MPRIS work
-  - measure RAM (~200MB target); try removing parts of Apple's DOM
   - done when: feels finished in daily use
 
-- [ ] **8. package**
+- [ ] **9. package**
   - electron-builder AppImage
   - done when: AppImage runs outside the dev shell and plays music
 

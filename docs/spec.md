@@ -16,7 +16,7 @@ what is pod?
 
 - single small, frameless, always-on-top window
 - Apple's UI hidden, our Svelte UI on top
-- Apple's DOM is hidden (`display: none`), not deleted, so MusicKit stays stable. Later: measure whether removing parts of it saves memory
+- Apple's DOM is hidden (`display: none`), not deleted, so MusicKit stays stable (removing it saves only ~2MB)
 - talk only to the MusicKit API
 - sign in once via Apple's login popup, session persisted
 
