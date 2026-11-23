@@ -63,6 +63,7 @@
     },
     "electronVersion": "45.2.1+wvcus",
     "artifactName": "pod-${arch}.${ext}",
+    "compression": "maximum",
     "extraResources": [
       {
         "from": "build/icon.png",
