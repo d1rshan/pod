@@ -1,6 +1,6 @@
 import { app, BrowserWindow, components } from 'electron'
-import { readFile } from 'node:fs/promises'
-import { watch } from 'node:fs'
+import { readFile, writeFile } from 'node:fs/promises'
+import { readFileSync, watch } from 'node:fs'
 import { join } from 'node:path'
 import { APPLE_MUSIC_ORIGIN, isAppleAuthUrl, isAppleMusicUrl } from './navigation'
 import {
@@ -9,9 +9,9 @@ import {
   SIGN_IN_COOKIE_TARGET,
   cookiesToAdopt
 } from './signInCookies'
+import { DEFAULT_STOREFRONT, isStorefront, parkedPath, parkedStorefront } from '../shared/parked'
 
 const PARTITION = 'persist:pod'
-const APPLE_MUSIC_URL = `${APPLE_MUSIC_ORIGIN}/`
 const PAGE_DIR = join(__dirname, '../page')
 const PAGE_BUNDLE = join(PAGE_DIR, 'index.js')
 /** written by the page watch build after index.js is fully on disk (see electron.vite.config.ts) */
@@ -26,6 +26,28 @@ const dev = !app.isPackaged
 if (dev) {
   app.commandLine.appendSwitch('remote-debugging-port', process.env['POD_DEBUG_PORT'] ?? '9222')
   app.commandLine.appendSwitch('remote-debugging-address', '127.0.0.1')
+}
+
+/** the account storefront the page last parked on (shared/parked.ts), so launches skip a reload */
+const storefrontFile = (): string => join(app.getPath('userData'), 'storefront')
+let storefront: string | undefined
+
+function savedStorefront(): string {
+  if (storefront) return storefront
+  try {
+    const sf = readFileSync(storefrontFile(), 'utf8').trim()
+    storefront = isStorefront(sf) ? sf : DEFAULT_STOREFRONT
+  } catch {
+    storefront = DEFAULT_STOREFRONT
+  }
+  return storefront
+}
+
+function saveStorefront(url: string): void {
+  const sf = parkedStorefront(new URL(url).pathname)
+  if (!sf || sf === savedStorefront()) return
+  storefront = sf
+  writeFile(storefrontFile(), sf).catch((err) => console.error('[pod] saving the storefront failed:', err))
 }
 
 /** Runs the page bundle in music.apple.com's main world (so it can reach `window.MusicKit`). */
@@ -70,17 +92,20 @@ function createWindow(): BrowserWindow {
   })
 
   // Offline at launch (or any failed load): show the window anyway and keep retrying.
-  // TODO(step 7): an offline state in our UI instead of Apple's/Chromium's error page.
+  // TODO(step 8): an offline state in our UI instead of Apple's/Chromium's error page.
   let retry: NodeJS.Timeout | undefined
-  const load = (): void => {
-    win.loadURL(APPLE_MUSIC_URL).catch(() => {}) // failures are handled in did-fail-load
+  /** Apple's page parks on a not-found route: MusicKit loads, no catalog page does (shared/parked.ts) */
+  const load = (url = `${APPLE_MUSIC_ORIGIN}${parkedPath(savedStorefront())}`): void => {
+    win.loadURL(url).catch(() => {}) // failures are handled in did-fail-load
   }
   win.webContents.on('did-fail-load', (_e, errorCode, errorDescription, url, isMainFrame) => {
     if (!isMainFrame || errorCode === ERR_ABORTED) return
     console.error(`[pod] load failed (${errorDescription}): ${url}`)
     if (!win.isVisible()) win.show()
     clearTimeout(retry)
-    retry = setTimeout(load, RETRY_LOAD_MS)
+    // a failed re-park retries its own storefront, not the saved one
+    const parked = isAppleMusicUrl(url) && parkedStorefront(new URL(url).pathname) ? url : undefined
+    retry = setTimeout(() => load(parked), RETRY_LOAD_MS)
   })
   win.on('closed', () => clearTimeout(retry))
 
@@ -107,6 +132,10 @@ function createWindow(): BrowserWindow {
         })
         .catch((err) => console.error('[pod] adopting sign-in cookies failed:', err))
     })
+  })
+  // the page re-parks on the account's storefront when it differs (auth.svelte.ts)
+  win.webContents.on('did-navigate', (_e, url) => {
+    if (isAppleMusicUrl(url)) saveStorefront(url)
   })
   win.webContents.on('will-navigate', (e, url) => {
     if (!isAppleMusicUrl(url)) e.preventDefault()

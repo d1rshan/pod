@@ -25,8 +25,10 @@ export interface MusicKitInstance {
   skipToPreviousItem(): Promise<unknown>
   /** seconds */
   seekToTime(time: number): Promise<unknown>
-  /** e.g. `us`, for /v1/catalog/{storefront}/... */
+  /** e.g. `us`, for /v1/catalog/{storefront}/... (MusicKit takes it from the page URL) */
   readonly storefrontId: string
+  /** the signed-in user's storefront, e.g. `in` */
+  readonly storefrontCountryCode?: string
   play(): Promise<void>
   pause(): void
   addEventListener(name: string, cb: () => void): void
@@ -86,17 +88,27 @@ declare global {
 }
 
 const AUTH_CHANGED = 'authorizationStatusDidChange'
+const STOREFRONT_CHANGED = 'storefrontCountryCodeDidChange'
 
 /** Resolves with Apple's MusicKit instance once the page has configured it (waits until aborted). */
 export function whenMusicKitReady(signal?: AbortSignal): Promise<MusicKitInstance> {
   return waitFor(() => window.MusicKit?.getInstance(), { timeoutMs: Infinity, signal })
 }
 
-/** Calls `cb` whenever the user signs in or out. Returns an unsubscribe function. */
-export function onAuthChange(mk: MusicKitInstance, cb: (signedIn: boolean) => void): () => void {
-  const handler = (): void => cb(mk.isAuthorized)
-  mk.addEventListener(AUTH_CHANGED, handler)
-  return () => mk.removeEventListener(AUTH_CHANGED, handler)
+/** The signed-in user's storefront (e.g. `in`), undefined when signed out or not known yet. */
+export function accountStorefront(mk: MusicKitInstance): string | undefined {
+  const sf = mk.storefrontCountryCode?.toLowerCase()
+  return mk.isAuthorized && sf ? sf : undefined
+}
+
+/** Calls `cb` when the user's storefront may have changed (sign in/out, account change). */
+export function onStorefrontChange(mk: MusicKitInstance, cb: () => void): () => void {
+  mk.addEventListener(AUTH_CHANGED, cb)
+  mk.addEventListener(STOREFRONT_CHANGED, cb)
+  return () => {
+    mk.removeEventListener(AUTH_CHANGED, cb)
+    mk.removeEventListener(STOREFRONT_CHANGED, cb)
+  }
 }
 
 /** True for MusicKit's "not authorized" rejection (also what closing the popup gives). */

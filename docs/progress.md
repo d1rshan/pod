@@ -57,7 +57,7 @@ each step = one session. "done when" = what the user checks before merging.
   - tap a result -> plays
   - done when: search a song, tap, it plays
 
-- [ ] **7. ram reduction**
+- [x] **7. ram reduction**
   - cut memory as far as it goes without breaking sign-in, playback or the look; find where it goes
     and pick the approach yourself
   - confirm what you keep with `bun run bench` (~3 min, so only once an idea is worth confirming, not
@@ -102,3 +102,6 @@ Gotchas: `currentPlaybackTime` is whole seconds -> `preciseTime` reads `audio#ap
 
 **6:** `music/search.ts` (`/v1/catalog/{sf}/search`, `types=songs`, 25 max, + tests) -> `state/search.svelte.ts` (debounced 350ms, enter = now, kept across tab switches, cleared on sign-out) -> `screens/Discover.svelte` (field, empty/no-results/error states, result rows). Tap = `player.playSong` (queue of that one song); the playing result is highlighted with the shared `RowToggle` (also used by Playlist).
 Gotcha: Apple's page shortcuts saw our keys retargeted to the shadow host and ate spaces in the field -> `index.ts` stops key events at the host (Apple's handler bubbles). Next: step 7.
+
+**7:** Apple's hidden home page was the cost (13 MSE motion videos, ~90 images, 4.8k nodes, growing over time). Main now loads `/{sf}/pod` (`shared/parked.ts`, a 404 that still boots Apple's shell + MusicKit); bench idle 549->360, playing 660->481, lyrics 808->498 MB (renderer 306->123). Storefront saved in `userData/storefront`; `auth.svelte.ts` re-parks (`location.replace`, max 3 per tab session) when the account's differs.
+Gotchas: MusicKit takes `storefrontId` from the URL, and a storefront that isn't the account's = `previewOnly` (stops at 90s). Tried, no gain over noise: audio service in-process (~7MB), V8 semi-space / optimize-for-size; network service in-process broke loading. Left: main ~115, CDM ~100, GPU ~70 (Chromium/Apple shell baseline). Apple logs its own 404 twice (expected). How it was found: CDP `Tracing` with `disabled-by-default-memory-infra` + `requestMemoryDump` (per-process allocator breakdown: media/cc image memory pointed at Apple's videos/images). Next: step 8.

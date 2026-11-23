@@ -17,6 +17,9 @@ what is pod?
 - single small, frameless, always-on-top window
 - Apple's UI hidden, our Svelte UI on top
 - Apple's DOM is hidden (`display: none`), not deleted, so MusicKit stays stable (removing it saves only ~2MB)
+- Apple's page is parked on a not-found route, `/{account storefront}/pod`: MusicKit and Apple's app shell load,
+  none of its catalog pages (home kept motion videos + ~100 images alive: ~180-300MB). The storefront must be the
+  account's (else MusicKit plays previews only); main remembers it, the page re-parks on a mismatch
 - talk only to the MusicKit API
 - sign in once via Apple's login popup, session persisted
 
@@ -26,7 +29,7 @@ what is pod?
 src/
   main/      # electron: window, sign-in popup, inject
   preload/   # window controls
-  shared/    # cross-process types
+  shared/    # cross-process types + helpers (parked page URL)
   page/      # injected into music.apple.com
     music/   # only place touching MusicKit (player, playlists, search, lyrics)
     state/   # svelte rune stores (player, nav, theme)

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { isAuthorizationError, signIn, type MusicKitInstance } from './musickit'
+import { accountStorefront, isAuthorizationError, signIn, type MusicKitInstance } from './musickit'
 
 const fakeMk = (authorize: () => Promise<void>, isAuthorized = false): MusicKitInstance => ({
   isAuthorized,
@@ -44,5 +44,15 @@ describe('signIn', () => {
   test('other failures reject', async () => {
     const mk = fakeMk(() => Promise.reject(new Error('network down')))
     await expect(signIn(mk)).rejects.toThrow('network down')
+  })
+})
+
+describe('accountStorefront', () => {
+  test('the signed-in user storefront, lowercased', () => {
+    expect(accountStorefront({ ...fakeMk(async () => {}, true), storefrontCountryCode: 'IN' })).toBe('in')
+  })
+  test('undefined when signed out or unknown', () => {
+    expect(accountStorefront({ ...fakeMk(async () => {}), storefrontCountryCode: 'in' })).toBeUndefined()
+    expect(accountStorefront(fakeMk(async () => {}, true))).toBeUndefined()
   })
 })
