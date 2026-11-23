@@ -51,7 +51,7 @@ each step = one session. "done when" = what the user checks before merging.
   - user scroll pauses auto-scroll (back after 4.5s); tap a line to seek
   - done when: lyrics fill word by word in sync and feel like apple's
 
-- [ ] **6. discover**
+- [x] **6. discover**
   - `music/search.ts`: catalog search, songs only
   - search field + result rows, empty state before searching
   - tap a result -> plays
@@ -91,3 +91,6 @@ Gotchas: the wash is the `.screen` background itself (a tinted child left a ligh
 
 **5:** `music/lyrics.ts` (own tiny XML reader -> lines of timed syllables, bg vocals, duet agents, instrumental gaps, `currentLine`/`activeLines`) -> `state/lyrics.svelte.ts` (fetched per song, cached; dims Playing's lyrics button when none) -> `screens/Lyrics.svelte` + `components/LyricsView.svelte` (one rAF loop writes `--fill`/`--y` on the active lines only; motion maths in `ui/lyricsMotion.ts`). Apple's values scaled to our window (22px type, current line 36px from the top).
 Gotchas: `currentPlaybackTime` is whole seconds -> `preciseTime` reads `audio#apple-music-player`. After a song change MusicKit reports the old song's time for a moment -> the player store ignores times > 2s for 2s (else the lyrics/bar flash). Catalog queue items have no `playParams.catalogId` (their id is it). Hover highlight only in user-scroll mode. Next: step 6.
+
+**6:** `music/search.ts` (`/v1/catalog/{sf}/search`, `types=songs`, 25 max, + tests) -> `state/search.svelte.ts` (debounced 350ms, enter = now, kept across tab switches, cleared on sign-out) -> `screens/Discover.svelte` (field, empty/no-results/error states, result rows). Tap = `player.playSong` (queue of that one song); the playing result is highlighted with the shared `RowToggle` (also used by Playlist).
+Gotcha: Apple's page shortcuts saw our keys retargeted to the shadow host and ate spaces in the field -> `index.ts` stops key events at the host (Apple's handler bubbles). Next: step 7.

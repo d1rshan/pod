@@ -6,6 +6,7 @@
   import { lyrics } from '../state/lyrics.svelte'
   import { nav } from '../state/nav.svelte'
   import { player } from '../state/player.svelte'
+  import { search } from '../state/search.svelte'
   import TabBar from './components/TabBar.svelte'
   import Discover from './screens/Discover.svelte'
   import Library from './screens/Library.svelte'
@@ -32,6 +33,7 @@
       library.reset()
       lyrics.reset()
       nav.reset()
+      search.clear()
       player.error = undefined
     }
   })

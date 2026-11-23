@@ -8,6 +8,7 @@
   import Artwork from '../components/Artwork.svelte'
   import BackLink from '../components/BackLink.svelte'
   import ListRow from '../components/ListRow.svelte'
+  import RowToggle from '../components/RowToggle.svelte'
   import Status from '../components/Status.svelte'
 
   interface Props {
@@ -52,15 +53,7 @@
   </div>
 </header>
 
-{#snippet toggle()}
-  <button class="play small" aria-label={player.playing ? 'Pause' : 'Play'} onclick={() => player.toggle()}>
-    {#if player.playing}
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M8 5v14M16 5v14" /></svg>
-    {:else}
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5Z" /></svg>
-    {/if}
-  </button>
-{/snippet}
+{#snippet toggle()}<RowToggle playing={player.playing} onclick={() => player.toggle()} />{/snippet}
 
 {#if player.error}<p class="error">{player.error}</p>{/if}
 
@@ -128,14 +121,6 @@
     background: var(--play-bg);
     color: var(--play-fg);
     cursor: pointer;
-  }
-  .play.small {
-    flex: none;
-    margin-top: 0;
-    padding: 0;
-  }
-  .play.small:active {
-    opacity: 0.6;
   }
   .play:disabled {
     opacity: 0.4;

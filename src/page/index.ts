@@ -33,6 +33,9 @@ function inject(): void {
 
   const host = document.createElement('div')
   host.id = HOST_ID
+  // Apple's page shortcuts (space = play/pause, ...) see our keys retargeted to the host, not an
+  // input, and eat them (no spaces in the search field): keep our keys to ourselves
+  for (const type of ['keydown', 'keypress', 'keyup']) host.addEventListener(type, (e) => e.stopPropagation())
   const shadow = host.attachShadow({ mode: 'open' })
   const tokenStyle = document.createElement('style')
   tokenStyle.textContent = tokens

@@ -6,6 +6,7 @@ import {
   onPlayback,
   playbackInfo,
   playPlaylist,
+  playSong,
   preciseTime,
   seek,
   skipNext,
@@ -81,6 +82,14 @@ class Player {
       this.playlistId = undefined // the old queue is gone even if this one fails
       await playPlaylist(mk, playlistId, index, trackId)
       this.playlistId = playlistId
+    })
+  }
+
+  /** plays one catalog song on its own */
+  async playSong(songId: string): Promise<void> {
+    await this.#run("Couldn't play. Try again.", async (mk) => {
+      this.playlistId = undefined
+      await playSong(mk, songId)
     })
   }
 
