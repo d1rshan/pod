@@ -1,6 +1,6 @@
 {
   "name": "pod",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A tiny iPod-style Apple Music player",
   "license": "GPL-3.0-only",
   "author": "d1rshan",
