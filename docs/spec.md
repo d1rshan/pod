@@ -40,7 +40,7 @@ src/
 
 - sign in: first run, opens Apple's login popup
 - playing: artwork over its own cover, rotating and blurred into colour (docs/ambient.md), title, progress, prev/play/next, lyrics button
-- lyrics: synced lyrics (risky - internal endpoint, test early)
+- lyrics: synced word by word, apple's lyrics view look and motion (docs/lyrics.md), over the playing background
 - library: user's playlists only
 - playlist detail: tracks, active song highlighted
 - discover: song search only (no recommendations for now)

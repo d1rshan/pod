@@ -43,15 +43,19 @@ each step = one session. "done when" = what the user checks before merging.
   - active song highlighted in playlist detail
   - done when: controls work, progress moves, highlight follows the current song
 
-- [ ] **5. discover**
+- [ ] **5. lyrics** (apple's lyrics view, docs/lyrics.md)
+  - `music/lyrics.ts`: `syllable-lyrics` TTML -> lines + timed words, instrumental gaps (+ tests)
+  - lyrics screen from Playing's lyrics button (no tab bar), over the same `ArtworkScene`
+  - apple's look: bold left-aligned lines, word-by-word gradient fill + lift, emphasis glow on held
+    words, blurred/faded other lines, eased scroll to the current line, instrumental dots
+  - user scroll pauses auto-scroll (back after 4.5s); tap a line to seek
+  - done when: lyrics fill word by word in sync and feel like apple's
+
+- [ ] **6. discover**
   - `music/search.ts`: catalog search, songs only
   - search field + result rows, empty state before searching
   - tap a result -> plays
   - done when: search a song, tap, it plays
-
-- [ ] **6. lyrics** (only if step 2 says feasible)
-  - lyrics screen from Playing (no tab bar), synced lines, current line highlighted
-  - done when: lyrics scroll in sync with playback
 
 - [ ] **7. polish**
   - window drag + close
