@@ -94,7 +94,7 @@ each step = one session. "done when" = what the user checks before merging.
   - done when: v0.1.0 is published from CI; the AppImage from the README button runs outside the
     dev shell, signs in, plays full songs and shows the picked icon
 
-- [ ] **9. macOS + Windows builds**
+- [x] **9. macOS + Windows builds**
   - castLabs Electron already ships macOS + Windows builds with Widevine; little app code is Linux-only
   - VMP signing (castLabs EVS, `castlabs-evs` in CI): Widevine on macOS/Windows likely refuses licenses
     for unsigned apps. The account exists; repo secrets `EVS_ACCOUNT_NAME` + `EVS_PASSWD` are set (the
@@ -149,3 +149,6 @@ Gotchas: MusicKit takes `storefrontId` from the URL, and a storefront that isn't
 
 **8:** Icon = canvas frame "Icon A2" (own round-head note on an ambient blur in Apple Music reds); source `build/icon.html`, rendered with headless Chrome to `build/icon.png` (1024) + `build/icons/` (512, 1024); window + sign-in popup use it. AppImage via electron-builder (`pod-x86_64.AppImage`), GPLv3. `scripts/version.ts` (next version, + tests) is shared by `.github/workflows/release.yml` and `bun run release` (`scripts/release.ts`).
 Gotchas: castLabs mirror must end in `/download/` (electron-builder adds `v<version>`). On NixOS, `dist` needs `stdenv.cc.cc.lib` + `zlib` in the dev shell (bundled 7za/mksquashfs), and the AppImage runs via `appimage-run` (agent shell: `--no-sandbox --no-zygote`). The bot pushes commit + tag atomically; publish retries. Next: TBD.
+
+**9:** electron-builder builds mac dmgs (arm64 + x64, ad-hoc signed so Apple silicon runs them) + a Windows NSIS exe (x64); `scripts/vmp` hooks VMP-sign via `castlabs-evs` (pinned 1.3.3): mac in `afterPack` (before codesign), Windows in `afterSign` (after the exe edit). `release.yml` = version -> build matrix -> publish; `bun run release build` = build-only run (artifacts, 7 days; prints the run page). macOS: own menu (app/edit/window), closing quits.
+Gotchas: the first build-only run passed and every VMP signature was valid, but nobody has run a mac/win build yet (assumed working: if Apple refuses licences, look at VMP first). Downloading the ~450MB of artifacts here kept failing (connection drops), so `release build` doesn't download. A release pushes ~10min after it starts: anything pushed to main meanwhile fails the atomic push (rerun). Next: TBD.

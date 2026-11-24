@@ -78,8 +78,8 @@ nix develop --command bun dev   # NixOS: needs programs.nix-ld.enable = true
 See `docs/spec.md` for what it is and `AGENTS.md` for how to work on it. Releases:
 `bun run release patch|minor|major|x.y.z` (runs `.github/workflows/release.yml`: builds on Linux,
 macOS and Windows, castLabs VMP-signs the macOS/Windows builds, then publishes one release). To
-only build (no version bump, tag or release), for testing: `bun run release build` (downloads
-the builds to `release/ci/`).
+only build (no version bump, tag or release), for testing: `bun run release build` (prints the run
+page; the builds are under its Artifacts).
 
 ## license
 

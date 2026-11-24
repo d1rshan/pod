@@ -1,17 +1,15 @@
 // Cuts a release through CI: `bun run release patch|minor|major|x.y.z`.
 // Checks main is clean and pushed and `gh` is signed in, triggers .github/workflows/release.yml,
 // watches it, prints the release URL. The bump commit is made by the workflow's bot.
-// `bun run release build`: the same builds (all OSes, VMP-signed) without a bump, tag or release,
-// downloaded to release/ci/ when done.
+// `bun run release build`: the same builds (all OSes, VMP-signed) without a bump, tag or release;
+// prints the run page, where they're downloadable (Artifacts, kept 7 days).
 import { spawnSync } from 'node:child_process'
-import { rmSync } from 'node:fs'
 import { currentVersion, isBump, nextVersion, remoteTags } from './version'
 
 const WORKFLOW = 'release.yml'
 const RUN_APPEAR_TIMEOUT_MS = 60_000
 
 const BUILD = 'build'
-const BUILD_DIR = 'release/ci'
 
 /** the workflow's `run-name` for this run (scripts/release.ts and release.yml must agree) */
 const runTitle = (bump: string): string => (bump === BUILD ? 'build only' : `release ${bump}`)
@@ -77,9 +75,9 @@ async function main(): Promise<void> {
   if (watch.status !== 0) fail(`run ${runId} failed: gh run view ${runId} --log-failed`)
 
   if (buildOnly) {
-    rmSync(BUILD_DIR, { recursive: true, force: true })
-    run('gh', ['run', 'download', String(runId), '--dir', BUILD_DIR])
-    console.log(`\nrelease: builds downloaded to ${BUILD_DIR}/ (also on the run page, kept 7 days)`)
+    // not downloaded here (~450MB): testers grab their OS's zip from the run page
+    const url = run('gh', ['run', 'view', String(runId), '--json', 'url', '-q', '.url'])
+    console.log(`\nrelease: built, download from Artifacts at ${url} (kept 7 days)`)
     return
   }
 
